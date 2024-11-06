@@ -1,0 +1,1 @@
+Has one "aws_cloudwatch_log_group" resource, one "aws_cloudwatch_log_stream" resource, one "aws_iam_role" resource, one "aws_s3_bucket" resource, and one "aws_kinesis_analytics_application" resource with a "cloudwatch_logging_options" block

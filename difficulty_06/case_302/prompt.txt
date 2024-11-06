@@ -1,0 +1,1 @@
+An AWS service that holds a web server which allows you to upload cat pictures and provides random cat pictures on demand. Accomplishes this with API Gateway and S3.

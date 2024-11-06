@@ -1,0 +1,10 @@
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_acl"
+has one "bucket"
+has one "acl"
+
+Resource "aws_s3_bucket_policy"
+has one "bucket"
+has one "policy"

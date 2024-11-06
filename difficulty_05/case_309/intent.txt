@@ -1,0 +1,29 @@
+have one "aws_ami" resource
+  with "filter" argument block
+    with "name" argument
+    with "values" argument with value "al2023-ami-2023.*-x86_64"
+have one "aws_key_pair" resource
+  with "public_key" argument
+have one "aws_instance" resource
+  with "ami" argument linking to ami resource
+  with "instance_type" argument with value "t2.micro"
+  with "key_name" argument linking to key_pair resource
+have one "aws_backup_plan" resource
+  with "name" argument
+  with "rule" argument block
+    with "rule_name" argument
+    with "target_vault_name" argument linking to backup_vault
+    with "schedule" argument with value "cron(0 0 * * ? *)"
+  with "lifecycle" argument block
+    with "delete_after" argument with value 7
+  with "advanced_backup_setting" argument block
+    with "backup_options" argument block
+      with "WindowsVSS" argument with value "enabled"
+    with "resource_type" argument with value "EC2"
+have one "aws_backup_vault" resource
+  with "name" argument
+have one "aws_backup_selection" resource
+  with "iam_role_arn" argument
+  with "name" argument
+  with "plan_id" argument linking to aws_backup_plan resource
+  with "resources" argument including the aws_instance resource

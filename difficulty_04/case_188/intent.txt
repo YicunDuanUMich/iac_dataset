@@ -1,0 +1,1 @@
+Create a VPC, 2 subnets, and ec2 instance in each subnet with latest Amazon Linux 2 AMI, with t2.micro instance type and an attached EBS volume of 50 GB.

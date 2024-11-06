@@ -1,0 +1,1 @@
+generate an Load Balancer with "authenticate-cognito" Action

@@ -1,0 +1,1 @@
+Create an elastic beanstalk worker environment for running batch processing jobs. Name the iam_role "eb_ec2_role", the instance profile "eb_ec2_profile", the elastic beanstalk application "batch_job_app", the bucket "sampleapril26426", the object "examplebucket_object", the sqs queue "batch_job_queue", and the application version "version".

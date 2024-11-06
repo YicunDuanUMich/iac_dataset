@@ -1,0 +1,1 @@
+generate an Application Load Balancer with name test-lb-tf, security groups, and subnets. it should not be internal, and enable deletion protection

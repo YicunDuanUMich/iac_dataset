@@ -1,0 +1,1 @@
+aws_autoscaling_group, aws_ec2_fleet, aws_launch_template, aws_subnet, aws_subnet, aws_vpc, aws_ami

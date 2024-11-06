@@ -1,0 +1,1 @@
+aws_chime_voice_connector, aws_chime_voice_connector_logging

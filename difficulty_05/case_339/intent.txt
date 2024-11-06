@@ -1,0 +1,15 @@
+Has one "aws_db_instance" resource
+    with one "allocated_storage" = 500
+    with one "engine" = "mysql"
+    with one "instance_class"
+    with one "password"
+    with one "username"
+    with one "engine_version" = 5.7
+
+has one aws_vpc
+
+has more than one aws_subnet
+
+has one security_group
+
+has one db_subnet_group

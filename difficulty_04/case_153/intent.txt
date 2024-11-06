@@ -1,0 +1,1 @@
+Needs to have an aws_lambda_function defined (IAM role, zip). Create a DynamoDB table. Create lambda source event from an event source from DynamoDB table and function name.

@@ -1,0 +1,1 @@
+Create an AWS lambda function called "example_lambda", and invoke the "example_lambda" lambda_function.

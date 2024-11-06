@@ -1,0 +1,1 @@
+aws_iam_role, aws_sagemaker_app, aws_sagemaker_domain, aws_sagemaker_user_profile, aws_subnet, aws_vpc, aws_iam_policy_document

@@ -1,0 +1,23 @@
+has one aws_s3_bucket resource
+with bucket
+
+has one aws_s3_bucket_acl resource
+with bucket 
+with acl
+
+has one aws_s3_bucket_lifecycle_configuration resource
+with bucket
+with rule
+     with id
+     with status
+     with action
+     with transition
+          with days
+          with storage_class
+with expiration
+     with days
+
+has one aws_s3_bucket_versioning resource
+with bucket
+with versioning_configuration
+     with status (can be "Enabled" or "Suspended")

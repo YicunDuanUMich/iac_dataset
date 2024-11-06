@@ -1,0 +1,1 @@
+aws_dax_subnet_group, aws_subnet, aws_subnet, aws_vpc

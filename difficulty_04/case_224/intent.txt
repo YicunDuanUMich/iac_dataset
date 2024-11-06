@@ -1,0 +1,5 @@
+Has one "aws_dynamodb_global_table" resource
+with one "replica"
+with one "region_name" = "us-east-1"
+with one "replica"
+with one "region_name" = "us-west-2"

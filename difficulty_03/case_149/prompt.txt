@@ -1,0 +1,1 @@
+Create an AWS Lambda function with an IAM role, an IAM policy document for assuming the role, and an archive file for the Lambda function code. The Lambda function should be triggered by a nodejs18 runtime, have a specific handler, and use a "lambda.js" as the source file for the code.

@@ -1,0 +1,12 @@
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_ownership_controls"
+has one "bucket"
+within "rule", it specifies:
+"object_ownership"
+
+Resource "aws_s3_bucket_acl"
+has a dependency on "aws_s3_bucket_ownership_controls.example"
+has one "bucket"
+has one "acl"

@@ -1,0 +1,1 @@
+aws_iam_role, aws_kinesisanalyticsv2_application, aws_iam_policy_document

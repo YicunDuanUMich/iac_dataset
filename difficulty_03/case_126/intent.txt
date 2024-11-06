@@ -1,0 +1,1 @@
+create aws_ami resource with cpu_count = 2 and cores_per_thread=2

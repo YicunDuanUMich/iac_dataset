@@ -1,0 +1,1 @@
+VPC with public and private subnets. Define 3 EC2 instances within an EC2 placement group. Use clustering.

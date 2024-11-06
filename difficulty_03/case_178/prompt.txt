@@ -1,0 +1,1 @@
+Create an aws_sagemaker_model running the kmeans image.

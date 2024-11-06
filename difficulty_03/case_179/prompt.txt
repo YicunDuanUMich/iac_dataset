@@ -1,0 +1,1 @@
+Create an aws_sagemaker_notebook_instance on an ml.t2.medium

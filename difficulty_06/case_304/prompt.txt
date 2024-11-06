@@ -1,0 +1,1 @@
+An AWS service that holds a web server which allows you to upload cat pictures and provides random cat pictures on demand. Accomplish this using the following resources: AWS DynamoDB table, AWS S3 bucket, AWS Lambda function, AWS Lambda permission, AWS API Gateway rest API, AWS API Gateway resource, AWS API Gateway method. Add any necessary resources.

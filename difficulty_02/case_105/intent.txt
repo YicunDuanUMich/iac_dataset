@@ -1,0 +1,10 @@
+has one "aws_s3_bucket" resource
+    with one "bucket"
+
+has one "aws_s3_bucket_metric"
+    with one "bucket"
+    with one "name
+
+has one "aws_s3_bucket_object"
+    with one "bucket"
+    with one "key"

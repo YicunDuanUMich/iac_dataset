@@ -1,0 +1,1 @@
+Configure Route 53 resources to manage a domain and directs traffic to an Elastic Beanstalk environment that has a connected RDS database. Name the environment "myenv", the instance profile "eb_ec2_profile1", and the database "myapp_db"

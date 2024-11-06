@@ -1,0 +1,1 @@
+aws_iam_role, aws_sagemaker_pipeline, aws_iam_policy_document, aws_sagemaker_prebuilt_ecr_image

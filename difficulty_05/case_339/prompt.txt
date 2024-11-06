@@ -1,0 +1,1 @@
+sets up an AWS environment with a main VPC, two subnets across different availability zones, and a security group to allow database access. It also configures a 500 GB 5.7 MySQL RDS instance with public accessibility, linked to the defined subnets and security group, outputting the database endpoint for connectivity.

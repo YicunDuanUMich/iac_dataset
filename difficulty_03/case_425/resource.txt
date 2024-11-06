@@ -1,0 +1,1 @@
+aws_efs_file_system, aws_efs_mount_target, aws_subnet, aws_vpc

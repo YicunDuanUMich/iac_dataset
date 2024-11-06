@@ -1,0 +1,1 @@
+Needs to have an aws_lambda_function defined. Create a aws_cloudwatch_event_rule to trigger every 15 minutes and aws_lambda_permission to have permission to run lambda function. Create a target to trigger the lambda function.

@@ -1,0 +1,1 @@
+Provision the necessary AWS infrastructure for deploying a web application, the IAM roles for access management, a VPC with an Internet Gateway for network connectivity, along with 2 subnets and route configurations, and an RDS instance for database requirements, all created within a Elastic Beanstalk environment.

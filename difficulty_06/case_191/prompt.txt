@@ -1,0 +1,1 @@
+Create 2 of the latest AWS Linux instances in private subnets sharing a EFS file system.

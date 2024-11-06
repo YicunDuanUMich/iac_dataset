@@ -1,0 +1,1 @@
+Create a sagemaker_app resource configured to be a JupyterServer.

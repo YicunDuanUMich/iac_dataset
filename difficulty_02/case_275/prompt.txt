@@ -1,0 +1,1 @@
+Create a S3 bucket with bucket name = "mybucket" and a bucket metric resource that adds metrics configuration for the entire bucket.

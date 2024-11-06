@@ -1,0 +1,1 @@
+aws_eks_cluster, aws_eks_identity_provider_config, aws_iam_role, aws_subnet, aws_subnet, aws_vpc

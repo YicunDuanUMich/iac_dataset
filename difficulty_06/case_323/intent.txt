@@ -1,0 +1,60 @@
+have one "aws_s3_bucket" resource
+  with "bucket" argument with value "video-content-bucket"
+have one "aws_lb" resource
+  with "subnets" argument linking to aws_subnet resources
+  with "security_groups" argument linking aws_security_group resource
+have one "aws_lb_listener" resource
+  with "load_balancer_arn" argument linking to the aws_lb resource
+  with "port" argument set to 443
+  with "protocol" argument with value "HTTPS"
+  with "default_action" argument block
+    with "type" argument with value "forward"
+    with "target_group_arn" argument linking to aws_lb_target_group resource
+with one "aws_lb_target_group" resource
+  with "name" argument
+  with "port" argument set to 443
+  with "protocol" argument with value "HTTPS"
+  with "vpc_id" argument linking to the aws_vpc resource
+with one "aws_lb_target_group_attachment" resource
+  with "target_group_arn" argument linking to the aws_lb_target_group resource
+  with "target_id" argument linking to the aws_instance resource
+  with "port" set to 443
+have one "aws_ami" resource
+  with "filter" argument block
+    with "name" argument
+    with "values" argument with value "al2023-ami-2023.*-x86_64"
+have one "aws_key_pair" resource
+  with "public_key" argument
+have one "aws_instance" resource
+  with "ami" argument linking to ami resource
+  with "instance_type" argument with value "t2.micro"
+  with "key_name" argument linking to key_pair resource
+have one "aws_vpc" resource
+  with "cidr_block" argument with value "10.0.0.0/16"
+have two "aws_subnet" resources
+  with "vpc_id" argument linking to the aws_vpc resource
+  with "cidr_block" argument with values "10.0.1.0/24" and "10.0.2.0/24"
+have one "aws_security_group" resource
+  with "vpc_id" argument linking to the aws_vpc resource
+have one "aws_vpc_security_group_ingress_rule" resource
+  with "security_group_id" argument linking to the aws_security_group resource
+  with "cidr_ipv4" argument with cidr_block of the aws_vpc resource
+  with "from_port" argument set to 443
+  with "to_port" argument set to 443
+  with "ip_protocol" argument with value "tcp"
+have one "aws_vpc_security_group_egress_rule" resource
+  with "security_group_id" argument linking to the aws_security_group resource
+  with "cidr_ipv4" argument with value "0.0.0.0/0"
+  with "from_port" argument set to 443
+  with "to_port" argument set to 443
+  with "ip_protocol" argument with value "tcp"
+have one "aws_route53_zone" resource
+  with "name" argument with value "netflix.com"
+have two "aws_route53_record" resources
+  with "type" argument with values "A" and "AAAA"
+  with "name" argument with value "lb"
+  with "zone_id" argument linking to the aws_route53_zone resource
+  with "alias" argument block
+    with "name" argument linking to the aws_lb dns_name
+    with "zone_id" argument linking to aws_lb zone_id
+    with "evaluate_target_health" argument set to true

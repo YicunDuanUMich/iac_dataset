@@ -1,0 +1,1 @@
+aws_db_instance, aws_db_subnet_group, aws_security_group, aws_security_group, aws_security_group, aws_security_group, aws_security_group, aws_security_group, aws_subnet, aws_subnet, aws_vpc, aws_availability_zones

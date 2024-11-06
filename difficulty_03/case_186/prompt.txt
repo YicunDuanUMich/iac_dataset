@@ -1,0 +1,1 @@
+Create the latest Amazon Linux 2 AMI with cpu count= 2 and cores per threads per core= 2

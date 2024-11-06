@@ -1,0 +1,27 @@
+has one aws_s3_bucket resource
+with bucket
+
+has one aws_s3_bucket_acl resource
+with bucket
+with acl
+
+has one aws_s3_bucket_ownership_controls resource
+with bucket
+with rule
+with object_ownership
+
+has one aws_s3_object resource
+with bucket
+with key
+with source
+
+has one aws_s3_bucket_public_access_block resource
+with bucket
+with block_public_acls (boolean)
+with block_public_policy (boolean)
+with ignore_public_acls (boolean)
+with restrict_public_buckets (boolean)
+
+has one aws_s3_bucket_policy resource
+with bucket
+with policy

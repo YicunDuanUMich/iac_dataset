@@ -1,0 +1,12 @@
+have one "aws_api_gateway_rest_api" resource
+    with "name" argument
+have one "aws_api_gateway_resource" resource
+    with "rest_api_id" argument linking to aws_api_gateway_rest_api resource id
+    with "parent_id" argument linking to aws_api_gateway_rest_api resource root_resource_id
+    with "path_part" argument
+have two "aws_api_gateway_method" resources
+    with "rest_api_id" argument linking to aws_api_gateway_rest_api resource
+    with "resource_id" argument linking to aws_api_gateway_resource
+    with "http_method" argument with values "GET" and "PUT"
+    with "authorization" argument
+have one "aws_s3_bucket" resource

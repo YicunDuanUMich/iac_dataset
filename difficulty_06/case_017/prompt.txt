@@ -1,0 +1,1 @@
+Configure an Elastic Beanstalk environment that contains autoscaling settings using thresholds and CPU utilization and connect it to a RDS database. Name the instance profile "eb_ec2_profile" and the database "my_db1"

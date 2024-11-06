@@ -1,0 +1,1 @@
+Create a bucket "a". Then configure logging for the bucket to send access logs to another bucket named 'logging-680235478471' with a prefix of 'log/' in the target bucket.

@@ -1,0 +1,1 @@
+aws_dynamodb_contributor_insights

@@ -1,0 +1,1 @@
+Configure blue/green deployment with Elastic Beanstalk Environments that are associated with an RDS database. Take a snapshot of the database prior to deployment and name the database "my_db" and the instance profile "ec2_eb_profile1" 

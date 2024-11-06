@@ -1,0 +1,1 @@
+Create a custom Virtual Private Cloud (VPC) with CIDR block 10.0.0.0/16. Create two subnets in us-east-1a and us-east-1b. Finally create an EC2 instance in each subnet using the latest Amazon Linux 2 AMI, with t2.micro instance type and an attached EBS volume of 50 GB.

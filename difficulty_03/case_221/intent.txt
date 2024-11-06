@@ -1,0 +1,1 @@
+Has one "aws_dynamodb_table" resource

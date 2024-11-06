@@ -1,0 +1,1 @@
+aws_cloudwatch_log_group, aws_msk_cluster, aws_security_group, aws_subnet, aws_subnet, aws_subnet, aws_vpc, aws_availability_zones

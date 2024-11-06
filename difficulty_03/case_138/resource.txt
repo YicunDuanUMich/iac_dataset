@@ -1,0 +1,1 @@
+aws_elasticache_user, aws_elasticache_user, aws_elasticache_user_group, aws_elasticache_user_group_association

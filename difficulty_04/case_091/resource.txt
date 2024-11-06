@@ -1,0 +1,1 @@
+aws_eks_access_entry, aws_eks_cluster, aws_iam_role, aws_subnet, aws_vpc

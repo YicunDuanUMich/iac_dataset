@@ -1,0 +1,1 @@
+sets up a PostgreSQL 12.6 instance on AWS RDS within specific public and private subnets for running Airbyte connector test cases, using managed settings for low maintenance and ensuring it's not publicly accessible.

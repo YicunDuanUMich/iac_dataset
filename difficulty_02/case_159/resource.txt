@@ -1,0 +1,1 @@
+aws_cloudwatch_composite_alarm, aws_cloudwatch_metric_alarm

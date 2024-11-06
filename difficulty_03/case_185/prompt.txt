@@ -1,0 +1,1 @@
+Create an AWS Lambda function. The function should be triggered by a nodejs18 runtime,use a "lambda.js" as the source code and a "index.js" as the handler. Please declare all necessary resources.

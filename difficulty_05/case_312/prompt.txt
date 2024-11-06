@@ -1,0 +1,1 @@
+An AWS service that runs a code everyday at 7 UTC. Accomplish this using the following resources: AWS EventBridge event rule, AWS EventBridge event target, AWS Lambda function, AWS lambda permission. Add any necessary resources.

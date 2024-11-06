@@ -1,0 +1,1 @@
+Configure production and staging Elastic Beanstalk environments with a respective db_instance from RDS. Name the instance profile "eb_ec2_profile", the production database "prod_db", and the staging database "staging_db"

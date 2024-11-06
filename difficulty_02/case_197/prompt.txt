@@ -1,0 +1,1 @@
+Provides an ElastiCache user group resource with 3 users

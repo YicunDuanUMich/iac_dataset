@@ -1,0 +1,1 @@
+VPC with a public and private subnet. Define an EC2 Fleet of the newest AWS Linux 2 with a combination of 5 On-Demand and 4 Spot Instances.  Utilize Launch Templates for configuration consistency. Leverage EC2 Auto Scaling for dynamic scaling based on demand.

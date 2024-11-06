@@ -1,0 +1,1 @@
+Needs to have a defined IAM role. Data for a .zip file, with source file = lambda.js, function name can be anything. For the aws_lambda_function use the defined zip, function name, set handler to anything, and runtime to "nodejs.18x"

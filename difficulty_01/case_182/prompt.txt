@@ -1,0 +1,3 @@
+Create a SageMaker Human Task UI resource from sagemaker-human-task-ui-template.html containing "<h1>
+    TEST
+</h1>"

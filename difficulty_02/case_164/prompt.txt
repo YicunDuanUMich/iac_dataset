@@ -1,0 +1,1 @@
+Create a Kinesis Streaming Destination for a specific DynamoDB table.

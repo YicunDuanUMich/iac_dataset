@@ -1,0 +1,1 @@
+Create an aws_sagemaker_notebook instance from "https://github.com/hashicorp/terraform-provider-aws.git"

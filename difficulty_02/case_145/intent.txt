@@ -1,0 +1,1 @@
+Creates a redshift_clluster in us-east-1 and a snapshot_copy in us-east-2

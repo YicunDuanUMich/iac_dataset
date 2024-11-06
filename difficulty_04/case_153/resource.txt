@@ -1,0 +1,1 @@
+aws_dynamodb_table, aws_iam_role, aws_lambda_event_source_mapping, aws_lambda_function, archive_file, aws_iam_policy_document

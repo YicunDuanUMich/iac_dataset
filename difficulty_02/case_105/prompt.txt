@@ -1,0 +1,1 @@
+Set up an AWS S3 bucket named 'my_bucket' with forced destruction enabled for cleanup purposes. Create an S3 bucket metric named 'my_bucket_metric' to monitor the entire bucket's activity. Additionally, include an S3 bucket object named 'my_object' with a specific key and content to be stored in the bucket.

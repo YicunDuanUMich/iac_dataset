@@ -1,0 +1,1 @@
+aws_cloudfront_distribution, aws_cloudfront_origin_access_control, aws_route53_record, aws_route53_record, aws_route53_zone, aws_s3_bucket

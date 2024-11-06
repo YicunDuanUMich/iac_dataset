@@ -1,0 +1,1 @@
+Create VPC, public subnet in the VPC, private subnet in the VPC, aws_ec2_fleet with 5 spot and 4 on demand, and aws_autoscaling

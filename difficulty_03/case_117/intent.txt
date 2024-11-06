@@ -1,0 +1,19 @@
+Data "aws_iam_policy_document"
+has one "effect"
+has one "principals" 
+has one "actions"
+has one "resources"
+
+Resource "aws_sns_topic" 
+has one "name"
+uses the JSON output
+
+Resource "aws_s3_bucket" 
+has one "bucket"
+
+Resource "aws_s3_bucket_notification" 
+has one "bucket"
+configures a "topic" notification with:
+"topic_arn"
+"events"
+"filter_suffix"

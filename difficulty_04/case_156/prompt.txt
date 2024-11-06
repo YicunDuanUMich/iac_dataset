@@ -1,0 +1,1 @@
+Trigger a "aws_lambda_function" called test_lambda whenever an EC2 image is created

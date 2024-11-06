@@ -1,0 +1,1 @@
+create a VPC in AWS with multiple public subnets and associates them with a route table configured for internet access via an internet gateway.

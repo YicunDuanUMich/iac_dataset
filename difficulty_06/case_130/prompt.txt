@@ -1,0 +1,1 @@
+Create a VPC with private subnets. Create 2 of the newest AWS Linux 2 EC2 instances in the private subnet mounting an EFS file system for shared storage.

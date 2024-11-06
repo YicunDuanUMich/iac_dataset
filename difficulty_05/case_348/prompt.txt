@@ -1,0 +1,1 @@
+sets up a 5 GB PostgreSQL database instance in AWS, specifying details like engine version, instance size, storage, and associated networking resources within a custom VPC and subnet. The max allocated storage should be 50 GB, and the maintainance window should be 0:00 to 3:00 AM on monday.

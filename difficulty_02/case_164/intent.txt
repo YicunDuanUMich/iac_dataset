@@ -1,0 +1,1 @@
+create a stream_arn (name), dynamodb table(hash_key, name, attribute (name, type)), create the kineses streaming

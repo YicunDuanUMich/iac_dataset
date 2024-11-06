@@ -1,0 +1,1 @@
+sets up a VPC with public and private subnets, multiple security groups for different components like master, worker, alert, API, standalone, and database services within an AWS region specified as "cn-north-1". It includes a PostgreSQL database instance within the VPC, accessible and secured by a designated security group.

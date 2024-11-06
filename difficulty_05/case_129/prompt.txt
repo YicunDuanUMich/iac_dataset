@@ -1,0 +1,1 @@
+Create VPC with three subnets: one public subnet and two private subnets. Create an EC2 instance in the public subnet running web servers, an EC2 instance in the private subnet running the application servers, and an RDS instance in the other private subnet serving as the database.

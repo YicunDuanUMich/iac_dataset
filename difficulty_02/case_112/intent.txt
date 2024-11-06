@@ -1,0 +1,9 @@
+has one aws_s3_bucket resource
+with bucket
+
+has one aws_s3_bucket_object_lock_configuration resource
+with bucket
+with rule
+     with default_retention
+          with mode (GOVERNANCE or COMPLIANCE)
+          with days or years

@@ -1,0 +1,1 @@
+Setup a 2 node RedShift cluster in us-east-1 and replicate it to us-east-2.

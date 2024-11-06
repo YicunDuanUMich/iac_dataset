@@ -1,0 +1,1 @@
+aws_iam_role, aws_msk_cluster, aws_mskconnect_connector, aws_mskconnect_custom_plugin, aws_s3_bucket, aws_s3_object, aws_security_group, aws_subnet, aws_subnet, aws_subnet, aws_vpc, aws_availability_zones

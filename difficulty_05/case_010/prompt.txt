@@ -1,0 +1,1 @@
+Create an elastic beanstalk environment with an elastic beanstalk application version. Name the iam_role "eb_ec2_role", the instance profile "eb_ec2_profile", the elastic beanstalk application "myapp", the bucket "sampleapril26426", the object "examplebucket_object", and the application version "version".

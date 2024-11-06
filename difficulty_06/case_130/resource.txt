@@ -1,0 +1,1 @@
+aws_efs_file_system, aws_efs_mount_target, aws_efs_mount_target, aws_instance, aws_instance, aws_security_group, aws_subnet, aws_subnet, aws_vpc

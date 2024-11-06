@@ -1,0 +1,1 @@
+The infrastructure for a video streaming site that has multiple servers to balance load. Accomplish this using the following resources: AWS Load Balancing, AWS Load Balancing target group, AWS Route53 zone, AWS Route53 record, AWS S3 bucket, and AWS VPC, AWS VPC subnet, AWS VPC security group, AWS EC2 instance. Add any necessary resources.

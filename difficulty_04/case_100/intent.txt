@@ -1,0 +1,25 @@
+has one "data" block for "aws_iam_policy_document" containing:
+one "effect"
+one "principals" block with "type" and "identifiers"
+one "actions" list
+
+has one "aws_iam_role" 
+with one "name"
+with one "assume_role_policy" referencing the data block
+
+has two "aws_iam_role_policy_attachment"
+"demo_eks_AmazonEKSClusterPolicy"
+with one "policy_arn"
+with one "role" referencing the "aws_iam_role.demo_eks.name"
+"demo_eks_AmazonEKSVPCResourceController"
+with one "policy_arn"
+with one "role" referencing the "aws_iam_role.demo_eks.name"
+
+has one "aws_eks_cluster"
+with one "name"
+with one "role_arn" referencing the "aws_iam_role.demo_eks.arn"
+with one "vpc_config" containing "subnet_ids"
+with dependencies on two IAM role policy attachments
+
+has one "data" block for "aws_eks_cluster" 
+with one "name" referencing the "aws_eks_cluster.demo_eks.name"

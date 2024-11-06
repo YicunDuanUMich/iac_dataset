@@ -1,0 +1,1 @@
+aws_redshift_cluster, aws_redshift_endpoint_authorization

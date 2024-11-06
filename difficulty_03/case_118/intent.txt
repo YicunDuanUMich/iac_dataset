@@ -1,0 +1,10 @@
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_versioning"
+has one "bucket"
+with one "status" in "versioning_configuration"
+
+Resource "aws_s3_bucket_object_lock_configuration"
+has one "bucket"
+with one "mode" and "days" in "default_retention" within "rule"

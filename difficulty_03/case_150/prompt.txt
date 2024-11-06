@@ -1,0 +1,1 @@
+Create a Lambda function URL resource for an aws_lambda_function called "example_lambda

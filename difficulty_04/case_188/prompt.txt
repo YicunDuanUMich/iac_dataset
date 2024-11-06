@@ -1,0 +1,1 @@
+Create two subnets in us-east-1a and us-east-1b with the latest Amazon Linux 2 AMI instance in each with t2.micro instance type and an attached EBS volume of 50 GB.

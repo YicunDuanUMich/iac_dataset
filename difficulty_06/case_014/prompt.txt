@@ -1,0 +1,1 @@
+Configure an Elastic Beanstalk environment that is linked to a relational database instance. Call the db_instance "default" and the instance profile "eb_ec2_profile"

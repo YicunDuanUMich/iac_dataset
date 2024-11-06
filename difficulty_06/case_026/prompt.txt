@@ -1,0 +1,1 @@
+Configure blue/green deployment with Route 53 resources to direct traffic to two separate environments that are connected to a shared RDS database. Enable health checks on the records and implement a failover routing policy. Name the instance profile "eb_ec2_profile", the database "myapp_db", and the environments "blue" and "green".

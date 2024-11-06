@@ -1,0 +1,47 @@
+Has one "aws_iam_role" resource
+    with "name"
+    with "assume_role_policy" and "Service" set to "ec2.amazonaws.com"
+
+Has one "aws_iam_role_policy_attachment" resource
+    with "role" referencing the "aws_iam_role"
+    with "policy_arn" set to "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
+
+Has one "aws_iam_instance_profile" resource
+    with "name"
+    with "role" referencing the "aws_iam_role" resource
+
+Has two "aws_elastic_beanstalk_application" resource provisioned in different regions
+    with "name"
+
+Has two "aws_elastic_beanstalk_environment" resources provisioned in different regions
+    with "name"
+    with "application" referencing the "aws_elastic_beanstalk_application" resource
+    with "solution_stack_name"
+    with a "setting" block which has a "value" that references the "aws_iam_instance_profile" resource
+    with a "setting" block that has a "value"  that references the "address" from one of the "db_instance" resource
+    with a "setting" block that has a "value"  that references the "username" from one of the "db_instance" resource 
+    with a "setting" block that has a "value"  that references the "password" from one of the "db_instance" resource 
+
+Has two "aws_db_instance" resources provisioned in different regions
+    with "instance_class"
+    with "allocated_storage"
+    with "engine"
+    with "username"
+    with "password"
+    with "backup_retention_period" set to a non-zero number
+    with "skip_final_snapshot"
+
+
+Has one "aws_route53_zone" resource
+    with "name"
+
+Has two "aws_route53_record" resources provisioned in different regions
+    with "name"
+    with "type"
+    with "ttl"
+    with "zone_id" referencing the "aws_route53_zone" resource
+    with "set_identifier"
+    with "records" referencing one of the "aws_elastic_beanstalk_environment" resource
+    with "latency_routing_policy" containing "region" 
+
+

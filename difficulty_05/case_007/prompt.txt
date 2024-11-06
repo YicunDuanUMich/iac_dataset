@@ -1,0 +1,1 @@
+Create an elastic beanstalk environment that contains autoscaling settings using thresholds and CPU utilization. Name the iam_role "eb_ec2_role", the instance profile "eb_ec2_profile", and the elastic beanstalk application "my_api_app".

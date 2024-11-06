@@ -1,0 +1,1 @@
+aws_lightsail_instance, aws_lightsail_static_ip, aws_lightsail_static_ip_attachment

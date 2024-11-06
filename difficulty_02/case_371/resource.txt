@@ -1,0 +1,1 @@
+aws_lightsail_disk, aws_availability_zones

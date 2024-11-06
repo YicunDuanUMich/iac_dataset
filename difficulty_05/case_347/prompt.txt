@@ -1,0 +1,1 @@
+sets up a PostgreSQL database instance in AWS, specifying details like engine version, instance size, storage, and associated networking resources within a custom VPC and subnet. the backup retention period should be 5, and the backup window should be from 3 AM to 6 AM

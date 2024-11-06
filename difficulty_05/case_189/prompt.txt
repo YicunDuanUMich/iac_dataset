@@ -1,0 +1,1 @@
+Create a public and private subnet. Define an EC2 Fleet of the newest AWS Linux 2 with 5 On-Demand and 4 Spot Instances using launch tempaltes.

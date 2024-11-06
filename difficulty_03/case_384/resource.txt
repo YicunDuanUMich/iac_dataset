@@ -1,0 +1,1 @@
+aws_glacier_vault, aws_iam_policy_document

@@ -1,0 +1,1 @@
+aws_api_gateway_method, aws_api_gateway_method, aws_api_gateway_resource, aws_api_gateway_rest_api, aws_s3_bucket

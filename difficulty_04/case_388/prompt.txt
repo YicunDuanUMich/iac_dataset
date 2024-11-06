@@ -1,0 +1,1 @@
+Write a Terraform script to establish a Network Load Balancer attached to an ec2 instance of t2.micro

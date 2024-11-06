@@ -1,0 +1,2 @@
+generage an S3 Glacier vault with a access policy using "aws_iam_policy_document" data and lock the policy using "aws_glacier_vault_lock"
+

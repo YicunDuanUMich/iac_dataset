@@ -1,0 +1,1 @@
+Create a Lambda event source mapping from a DynamoDB

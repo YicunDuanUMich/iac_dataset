@@ -1,0 +1,1 @@
+Configure Elastic Beanstalk Environments in different regions and use Route53 resources to navigate traffic to the closest environment based on their geolocation. Name the environments "us_west" and "eu_central" and provision all the resources in their designated region

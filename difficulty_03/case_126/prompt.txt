@@ -1,0 +1,1 @@
+Create an AWS aws_ami for the latest Amazon Linux 2 AMI. Set the cpu count to 2 and cores per threads per core to 2

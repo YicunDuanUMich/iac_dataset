@@ -1,0 +1,1 @@
+Configure Active-Passive Failover policies using Route 53 resources. Name the health check resource "primary_health_check" and use a fqdn. Call the zone "primary"

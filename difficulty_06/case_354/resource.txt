@@ -1,0 +1,1 @@
+aws_db_proxy, aws_db_subnet_group, aws_iam_role, aws_rds_cluster, aws_secretsmanager_secret, aws_secretsmanager_secret_version, aws_security_group, aws_security_group, aws_subnet, aws_subnet, aws_vpc

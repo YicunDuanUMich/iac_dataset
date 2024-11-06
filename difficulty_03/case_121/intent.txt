@@ -1,0 +1,18 @@
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_acl" 
+has one "bucket"
+has one "acl" set to "private"
+
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_acl"
+has one "bucket"
+has one "acl" set to "log-delivery-write"
+
+Resource "aws_s3_bucket_logging"
+has one "bucket"
+has one "target_bucket"
+has one "target_prefix"

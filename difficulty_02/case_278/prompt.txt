@@ -1,0 +1,1 @@
+I have a PDF with path "assets/test.pdf". Make an AWS resource to store this PDF and upload it.

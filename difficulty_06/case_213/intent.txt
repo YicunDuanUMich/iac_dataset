@@ -1,0 +1,6 @@
+Has one "aws_mskconnect_custom_plugin" resource
+with one "content_type" = "ZIP"
+with one "location"
+with one "s3"
+with one "file_key" = "debezium.zip"
+Has one "aws_mskconnect_connector" resource

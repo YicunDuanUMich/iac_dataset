@@ -1,0 +1,1 @@
+aws_route53_vpc_association_authorization, aws_route53_zone, aws_route53_zone_association, aws_vpc, aws_vpc

@@ -1,0 +1,1 @@
+aws_iam_role, aws_lambda_function, aws_lambda_function_url, archive_file, aws_iam_policy_document

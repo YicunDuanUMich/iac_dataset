@@ -1,0 +1,4 @@
+Has an aws_s3_bucket resource
+
+Has an aws_s3_bucket_metric
+with bucket = bucked id OR name

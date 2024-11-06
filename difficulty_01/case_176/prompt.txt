@@ -1,0 +1,1 @@
+Create a sagemaker_code_repository to aws_sagemaker_code_repository to "https://github.com/hashicorp/terraform-provider-aws.git"

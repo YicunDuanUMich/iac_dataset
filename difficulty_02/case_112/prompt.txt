@@ -1,0 +1,1 @@
+Create an AWS S3 bucket named 'example-bucket' with object lock enabled. Configure object lock compliance mode with a retention period of 30 days for objects in the bucket.

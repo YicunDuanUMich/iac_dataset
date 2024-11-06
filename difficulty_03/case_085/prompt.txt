@@ -1,0 +1,1 @@
+Configure a routing policy that utilizes a user's location to route them to the nearest endpoint of a route 53 zone using Route 53 resources. Call the zone "primary" and use "US" and "EU" continents

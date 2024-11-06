@@ -1,0 +1,13 @@
+Has "aws_vpc"
+
+Has two "aws_subnet"
+
+Has "aws_neptune_subnet_group"
+with subnet_ids = array with both "aws_subnet"
+
+Has "aws_neptune_cluster"
+with "neptune_cluster_parameter_group_name"
+with "neptune_cluster_subnet_group"
+
+Has "aws_neptune_cluster_parameter_group"
+with family = "neptune1.2"

@@ -1,0 +1,1 @@
+aws_dynamodb_kinesis_streaming_destination, aws_dynamodb_table, aws_kinesis_stream

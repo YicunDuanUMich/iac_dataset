@@ -1,0 +1,1 @@
+Create S3 bucket with bucket name = "mybucket". Then create a bucket object resource for a file at source location "path/to/file" and upload the object to the bucket.

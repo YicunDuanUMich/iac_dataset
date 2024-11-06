@@ -1,0 +1,12 @@
+Resource "aws_kms_key"
+has one "description"
+has one "deletion_window_in_days"
+
+Resource "aws_s3_bucket"
+has one "bucket"
+
+Resource "aws_s3_bucket_server_side_encryption_configuration"
+has one "bucket"
+within "rule", it specifies:
+"kms_master_key_id"
+"sse_algorithm"

@@ -1,0 +1,1 @@
+sets up a PostgreSQL database instance in AWS, specifying details like engine version, instance size, storage, and associated networking resources within a custom VPC and subnet. the database should allow major version upgrade, automatically do minor version upgrade, and should not be publicly accessible.

@@ -1,0 +1,17 @@
+has one "aws_lb" resource
+    with load_balancer_type = "network"
+
+has one "aws_lb_listener" resource
+    with one default_action argument
+        with one type argument
+            with one of following values: forward, redirect, fixed-response, authenticate-cognito and authenticate-oidc
+    with one load_balancer_arn argument
+
+has one aws_lb_target_group_attachment
+    with one target_group_arn
+    with one target_id
+
+has one "aws_lb_target_group"
+
+has at least one "aws_instance"
+    with either launch_template or (ami and instance_type) argument

@@ -1,0 +1,1 @@
+An AWS EventBridge event rule named "cron" that is scheduled to make target happen everyday at 7 UTC. The target should be linked to a Lambda function with deployment packet at "cron.zip".

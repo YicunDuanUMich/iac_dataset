@@ -1,0 +1,11 @@
+has one "aws_eks_cluster" resource
+with one "name"
+with one "role_arn"
+with one "vpc_config" containing "subnet_ids"
+with dependencies on two IAM role policy attachments
+
+has one "output" for "endpoint"
+with one "value"
+
+has one "output" for "kubeconfig-certificate-authority-data"
+with one "value"

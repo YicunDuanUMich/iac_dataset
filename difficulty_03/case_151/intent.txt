@@ -1,0 +1,1 @@
+Needs to have an aws_lambda_function defined (IAM role, zip). Use aws_lambda_invocation on the delcared aws_lambda_function

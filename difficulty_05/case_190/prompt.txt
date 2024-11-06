@@ -1,0 +1,1 @@
+Create one public subnet and two private subnets.The public subnet will run a webserver, the private subnets will have  a application server and relational databse.

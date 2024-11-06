@@ -1,0 +1,1 @@
+sets up an AWS RDS Aurora MySQL cluster with a proxy for enhanced connection management, including VPC, subnets, security groups, IAM roles, and Secrets Manager for secure credential storage. the backup retention period for rds cluster should be 5, and the preffered backup window is 7 am to 9 am.

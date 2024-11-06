@@ -1,0 +1,1 @@
+aws_elasticsearch_domain, aws_iam_role, aws_iam_role_policy, aws_kinesis_firehose_delivery_stream, aws_s3_bucket, aws_security_group, aws_subnet, aws_subnet, aws_vpc, aws_iam_policy_document, aws_iam_policy_document

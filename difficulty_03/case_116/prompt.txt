@@ -1,0 +1,1 @@
+Create a Terraform configuration that defines an AWS S3 bucket, an ACL for the bucket, and a bucket policy allowing s3:GetObject actions with a condition based on the AWS Referer header. The bucket should have a unique name like "my_unique_bucket_name," and the policy should grant access to all principals. 

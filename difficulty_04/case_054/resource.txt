@@ -1,0 +1,1 @@
+aws_connect_bot_association, aws_connect_instance, aws_lex_bot, aws_lex_intent, aws_region
