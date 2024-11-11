@@ -1,5 +1,22 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -57,9 +74,9 @@ resource "aws_elastic_beanstalk_application" "my_app" {
 resource "aws_elastic_beanstalk_environment" "prod_env" {
   name                = "my-app-prod"
   application         = aws_elastic_beanstalk_application.my_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
-    setting {
+  setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DB_HOST"
     value     = aws_db_instance.prod_db.address
@@ -102,7 +119,7 @@ resource "aws_db_instance" "staging_db" {
 resource "aws_elastic_beanstalk_environment" "staging_env" {
   name                = "my-app-staging"
   application         = aws_elastic_beanstalk_application.my_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
@@ -122,10 +139,9 @@ resource "aws_elastic_beanstalk_environment" "staging_env" {
     value     = aws_db_instance.staging_db.password
   }
 
-    setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile.name
-    }
-
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }

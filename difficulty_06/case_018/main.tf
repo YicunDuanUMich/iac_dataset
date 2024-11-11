@@ -1,5 +1,22 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -25,7 +42,6 @@ resource "aws_iam_role_policy_attachment" "eb_managed_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
-
 # Create an instance profile tied to the role
 resource "aws_iam_instance_profile" "eb_ec2_profile" {
   name = "elastic_beanstalk_ec2_profile"
@@ -42,13 +58,17 @@ resource "aws_internet_gateway" "eb_igw" {
   vpc_id = aws_vpc.eb_vpc.id
 }
 
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # Subnets
 resource "aws_subnet" "eb_subnet_public_1" {
   vpc_id     = aws_vpc.eb_vpc.id
   cidr_block = "10.0.1.0/24"
 
   map_public_ip_on_launch = true
-  availability_zone       = "us-west-2a"
+  availability_zone       = data.aws_availability_zones.available.names[0]
 }
 
 resource "aws_subnet" "eb_subnet_public_2" {
@@ -56,7 +76,7 @@ resource "aws_subnet" "eb_subnet_public_2" {
   cidr_block = "10.0.2.0/24"
 
   map_public_ip_on_launch = true
-  availability_zone       = "us-west-2b"
+  availability_zone       = data.aws_availability_zones.available.names[1]
 }
 
 # Security groups for Elastic Beanstalk environments
@@ -64,26 +84,28 @@ resource "aws_security_group" "eb_env_sg" {
   name        = "eb-env-sg"
   description = "Security group for Elastic Beanstalk environments"
   vpc_id      = aws_vpc.eb_vpc.id
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+}
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_vpc_security_group_ingress_rule" "ingress1" {
+  security_group_id = aws_security_group.eb_env_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
+}
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_vpc_security_group_ingress_rule" "ingress2" {
+  security_group_id = aws_security_group.eb_env_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "egress1" {
+  security_group_id = aws_security_group.eb_env_sg.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
 }
 
 # DB subnet group for RDS instance
@@ -110,6 +132,7 @@ resource "aws_route_table_association" "eb_route_table_association_2" {
   subnet_id      = aws_subnet.eb_subnet_public_2.id
   route_table_id = aws_route_table.eb_route_table.id
 }
+
 # RDS instance
 resource "aws_db_instance" "shared_rds" {
   allocated_storage    = 20
@@ -133,28 +156,28 @@ resource "aws_elastic_beanstalk_application" "microservice_app" {
 resource "aws_elastic_beanstalk_environment" "microservice_env1" {
   name                = "microservice-env1"
   application         = aws_elastic_beanstalk_application.microservice_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
   # Elastic Beanstalk environment variables for RDS connection
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "RDS_HOSTNAME"
+    name      = "DB_HOSTNAME"
     value     = aws_db_instance.shared_rds.address
   }
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "RDS_USERNAME"
+    name      = "DB_USERNAME"
     value     = aws_db_instance.shared_rds.username
   }
 
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
-    name      = "RDS_PASSWORD"
+    name      = "DB_PASSWORD"
     value     = aws_db_instance.shared_rds.password
   }
 
-    setting {
+  setting {
     namespace = "aws:ec2:vpc"
     name      = "VPCId"
     value     = aws_vpc.eb_vpc.id
@@ -173,8 +196,8 @@ resource "aws_elastic_beanstalk_environment" "microservice_env1" {
   }
 
   setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile.name
-    }
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }

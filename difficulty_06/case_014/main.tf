@@ -110,14 +110,14 @@ resource "aws_elastic_beanstalk_environment" "default" {
   }
 
   setting {
-    namespace = "aws:rds:dbinstance"
-    name      = "DBUser"
+    namespace = "aws:elasticbeanstalk:application:environment"
+    name      = "DB_USER"
     value     = aws_db_instance.default.username
   }
 
   setting {
-    namespace = "aws:rds:dbinstance"
-    name      = "DBPassword"
+    namespace = "aws:elasticbeanstalk:application:environmente"
+    name      = "DB_PASSWORD"
     value     = aws_db_instance.default.password
   }
 
