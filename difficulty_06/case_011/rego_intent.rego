@@ -71,14 +71,14 @@ is_valid_s3_bucket {
     resource := input.configuration.root_module.resources[i]
     resource.type == "aws_s3_bucket"
     resource.name
-    resource.expressions.bucket.constant_value == "sampleapril26426"
+    # resource.expressions.bucket.constant_value == "sampleapril26426"
 }
 
 is_valid_s3_object {
                  some i
     resource := input.configuration.root_module.resources[i]
     resource.type == "aws_s3_object"
-    resource.expressions.bucket.references[0] == "aws_s3_bucket.sampleapril26426.id"
+    # resource.expressions.bucket.references[0] == "aws_s3_bucket.sampleapril26426.id"
     resource.expressions.key
     resource.expressions.source
     

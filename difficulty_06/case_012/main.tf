@@ -1,5 +1,22 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-east-1" 
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -32,17 +49,53 @@ resource "aws_iam_instance_profile" "eb_ec2_profile" {
   role = aws_iam_role.eb_ec2_role.name
 }
 
+resource "aws_s3_bucket" "sample_bucket" {
+  bucket_prefix = "sample-"
+}
+
+resource "aws_s3_object" "examplebucket_blue_object" {
+  key    = "blue_app"
+  bucket = aws_s3_bucket.sample_bucket.id
+  source = "./supplement/app.zip"
+}
+
+resource "aws_s3_object" "examplebucket_green_object" {
+  key    = "green_app"
+  bucket = aws_s3_bucket.sample_bucket.id
+  source = "./supplement/app.zip"
+}
+
 # Elastic Beanstalk application
-resource "aws_elastic_beanstalk_application" "myapp" {
-  name        = "myapp"
-  description = "An application for Blue/Green deployment."
+resource "aws_elastic_beanstalk_application" "blue_app" {
+  name        = "blue-app"
+  description = "An application for Blue deployment."
+}
+
+resource "aws_elastic_beanstalk_application_version" "blue_version" {
+  name        = "v1"
+  application = aws_elastic_beanstalk_application.blue_app.name
+  bucket = aws_s3_object.examplebucket_blue_object.bucket
+  key    = aws_s3_object.examplebucket_blue_object.key
+}
+
+resource "aws_elastic_beanstalk_application" "green_app" {
+  name        = "green-app"
+  description = "An application for Green deployment."
+}
+
+resource "aws_elastic_beanstalk_application_version" "green_version" {
+  name        = "v2"
+  application = aws_elastic_beanstalk_application.green_app.name
+  bucket = aws_s3_object.examplebucket_green_object.bucket
+  key    = aws_s3_object.examplebucket_green_object.key
 }
 
 # Blue environment
 resource "aws_elastic_beanstalk_environment" "blue" {
-  name                = "${aws_elastic_beanstalk_application.myapp.name}-blue"
-  application         = aws_elastic_beanstalk_application.myapp.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  name                = "${aws_elastic_beanstalk_application.blue_app.name}"
+  application         = aws_elastic_beanstalk_application.blue_app.name
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
+  version_label = aws_elastic_beanstalk_application_version.blue_version.name
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
@@ -53,9 +106,10 @@ resource "aws_elastic_beanstalk_environment" "blue" {
 
 # Green environment (New version)
 resource "aws_elastic_beanstalk_environment" "green" {
-  name                = "${aws_elastic_beanstalk_application.myapp.name}-green"
-  application         = aws_elastic_beanstalk_application.myapp.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  name                = "${aws_elastic_beanstalk_application.green_app.name}-green"
+  application         = aws_elastic_beanstalk_application.green_app.name
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
+  version_label = aws_elastic_beanstalk_application_version.green_version.name
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"

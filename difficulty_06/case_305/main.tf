@@ -1,43 +1,77 @@
-provider "aws" {
-  region = "us-west-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_iam_role" "caas_read" {
-  name = "test_role"
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+resource "aws_dynamodb_table" "caas" {
+  name           = "cat_names"
+  hash_key       = "name"
+  billing_mode   = "PAY_PER_REQUEST"
+
+  attribute {
+    name = "name"
+    type = "S"
+  }
+}
+
+resource "aws_s3_bucket" "caas" {
+  bucket_prefix = "cat-image"
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name = "lambda_api_gateway_role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Action = "sts:AssumeRole"
         Effect = "Allow"
-        Sid    = ""
         Principal = {
           Service = "lambda.amazonaws.com"
         }
-      },
+      }
     ]
   })
 }
 
-resource "aws_iam_role" "caas_write" {
-  name = "test_role"
-
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
-  assume_role_policy = jsonencode({
+resource "aws_iam_role_policy" "lambda_policy" {
+  name   = "lambda_policy"
+  role   = aws_iam_role.lambda_role.id
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Effect   = "Allow"
+        Resource = "${aws_s3_bucket.caas.arn}/*"
       },
+      {
+        Action = [
+          "dynamodb:PutItem"
+        ]
+        Effect   = "Allow"
+        Resource = aws_dynamodb_table.caas.arn
+      }
     ]
   })
 }
@@ -66,56 +100,24 @@ resource "aws_api_gateway_method" "caas_cat_put" {
   authorization = "NONE"
 }
 
-resource "aws_dynamodb_table" "caas" {
-  name           = "cat_list"
-  hash_key       = "name"
-  read_capacity  = 10
-  write_capacity = 10
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-}
-
-resource "aws_s3_bucket" "caas" {}
-
-data "archive_file" "caas_cat_get" {
+data "archive_file" "caas_cat" {
   type        = "zip"
-  source_file = "caas_cat_get.py"
-  output_path = "caas_cat_get.zip"
+  source_file = "./supplement/caas_cat.py"
+  output_path = "./supplement/caas_cat.zip"
 }
 
-data "archive_file" "caas_cat_put" {
-  type        = "zip"
-  source_file = "caas_cat_put.py"
-  output_path = "caas_cat_put.zip"
-}
-
-resource "aws_lambda_function" "caas_cat_get" {
-  function_name = "caas_cat_get"
-  role          = aws_iam_role.caas_read.arn
-  filename      = "caas_cat_get.zip"
-  handler       = "caas_cat_get.handler"
+resource "aws_lambda_function" "caas_cat" {
+  function_name = "caas_cat"
+  role          = aws_iam_role.lambda_role.arn
+  filename      = data.archive_file.caas_cat.output_path
+  source_code_hash = data.archive_file.caas_cat.output_base64sha256
+  handler       = "caas_cat.handler"
   runtime       = "python3.12"
 
   environment {
     variables = {
       CAAS_S3_BUCKET = "${aws_s3_bucket.caas.id}"
-    }
-  }
-}
-
-resource "aws_lambda_function" "caas_cat_put" {
-  function_name = "caas_cat_put"
-  role          = aws_iam_role.caas_write.arn
-  filename      = "caas_cat_put.zip"
-  handler       = "caas_cat_put.handler"
-  runtime       = "python3.12"
-
-  environment {
-    variables = {
-      CAAS_S3_BUCKET = "${aws_s3_bucket.caas.id}"
+      DYNAMODB_TABLE_NAME = "${aws_dynamodb_table.caas.id}"
     }
   }
 }
@@ -126,7 +128,7 @@ resource "aws_api_gateway_integration" "caas_cat_get" {
   http_method             = aws_api_gateway_method.caas_cat_get.http_method
   type                    = "AWS_PROXY"
   integration_http_method = "GET"
-  uri                     = aws_lambda_function.caas_cat_get.invoke_arn
+  uri                     = aws_lambda_function.caas_cat.invoke_arn
 }
 
 resource "aws_api_gateway_integration" "caas_cat_put" {
@@ -135,21 +137,30 @@ resource "aws_api_gateway_integration" "caas_cat_put" {
   http_method             = aws_api_gateway_method.caas_cat_put.http_method
   type                    = "AWS_PROXY"
   integration_http_method = "PUT"
-  uri                     = aws_lambda_function.caas_cat_put.invoke_arn
+  uri                     = aws_lambda_function.caas_cat.invoke_arn
 }
 
-resource "aws_lambda_permission" "caas_cat_get" {
+resource "aws_lambda_permission" "caas_cat" {
   action        = "lambda:InvokeFunction"
   principal     = "apigateway.amazonaws.com"
-  function_name = aws_lambda_function.caas_cat_get.function_name
+  function_name = aws_lambda_function.caas_cat.function_name
 
-  source_arn = "${aws_api_gateway_rest_api.caas.execution_arn}/*/GET/cat"
+  source_arn = "${aws_api_gateway_rest_api.caas.execution_arn}/*/*"
 }
 
-resource "aws_lambda_permission" "caas_cat_put" {
-  action        = "lambda:InvokeFunction"
-  principal     = "apigateway.amazonaws.com"
-  function_name = aws_lambda_function.caas_cat_put.function_name
+resource "aws_api_gateway_deployment" "api_deployment" {
+  rest_api_id = aws_api_gateway_rest_api.caas.id
+  depends_on  = [aws_api_gateway_integration.caas_cat_get, 
+                 aws_api_gateway_integration.caas_cat_put]
+}
 
-  source_arn = "${aws_api_gateway_rest_api.caas.execution_arn}/*/PUT/cat"
+resource "aws_api_gateway_stage" "api_stage" {
+  deployment_id = aws_api_gateway_deployment.api_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.caas.id
+  stage_name    = "dev"
+}
+
+output "api_id" {
+  value = aws_api_gateway_rest_api.caas.id
+  description = "The API Gateway ID"
 }

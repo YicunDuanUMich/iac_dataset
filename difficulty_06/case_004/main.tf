@@ -1,5 +1,22 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1" 
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 # Create a VPC for internal resources
@@ -38,17 +55,19 @@ resource "aws_db_subnet_group" "main" {
   subnet_ids = [aws_subnet.maina.id, aws_subnet.mainb.id]
 }
 
+data "aws_availability_zones" "available" {}
+
 # Subnet for RDS
 resource "aws_subnet" "maina" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.0.0/25"
-  availability_zone = "us-west-2a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 }
 
 resource "aws_subnet" "mainb" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.0.128/25"
-  availability_zone = "us-west-2b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 }
 
 # Route 53 Public Hosted Zone for external users

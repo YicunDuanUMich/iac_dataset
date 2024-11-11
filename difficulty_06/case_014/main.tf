@@ -1,5 +1,22 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -45,15 +62,34 @@ resource "aws_db_instance" "default" {
   skip_final_snapshot  = true
 }
 
+resource "aws_s3_bucket" "sample_bucket" {
+  bucket_prefix = "sample-"
+}
+
+resource "aws_s3_object" "examplebucket_object" {
+  key    = "randofile"
+  bucket = aws_s3_bucket.sample_bucket.id
+  source = "./supplement/app.zip"
+}
+
+# Define the Elastic Beanstalk application
 resource "aws_elastic_beanstalk_application" "default" {
   name        = "my-app"
   description = "My awesome application"
 }
 
+# Define the Elastic Beanstalk application version
+resource "aws_elastic_beanstalk_application_version" "version" {
+  name        = "app-version"
+  application = aws_elastic_beanstalk_application.default.name
+  bucket = aws_s3_object.examplebucket_object.bucket
+  key    = aws_s3_object.examplebucket_object.key
+}
+
 resource "aws_elastic_beanstalk_environment" "default" {
   name                = "my-app-env"
   application         = aws_elastic_beanstalk_application.default.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
   setting {
     namespace = "aws:ec2:vpc"
@@ -90,8 +126,6 @@ resource "aws_elastic_beanstalk_environment" "default" {
     name      = "DB_HOST"
     value     = aws_db_instance.default.address
   }
-
-
 
   setting {
       namespace = "aws:autoscaling:launchconfiguration"

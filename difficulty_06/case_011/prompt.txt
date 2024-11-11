@@ -1,1 +1,2 @@
-Configure Route 53 resources to manage a domain and directs traffic to an Elastic Beanstalk environment. Name the zone "main", the environment "eb-env", the iam role "eb_ec2_role", the instance profile "eb_ec2_profile",  the bucket "sampleapril26426", the object "examplebucket_object", the application "myapp" and the application version "version"
+Configure Route 53 resources to manage a domain and directs traffic to an Elastic Beanstalk environment. 
+Name the zone "main", the environment "eb-env", the iam role "eb_ec2_role", the instance profile "eb_ec2_profile", the bucket (with unique name), the object "examplebucket_object", the application "myapp" and the application version "version"

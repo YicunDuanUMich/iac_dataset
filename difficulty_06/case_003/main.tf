@@ -1,21 +1,58 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+      configuration_aliases = [ aws.main, aws.us_east, aws.eu_central, aws.ap_southeast ]
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+
 provider "aws" {
-  region = "us-west-2" 
   alias = "main"
+  region = "us-west-2" 
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 provider "aws" {
   alias  = "us_east"
   region = "us-east-1" # Example region for US East
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 provider "aws" {
   alias  = "eu_central"
   region = "eu-central-1" # Example region for EU Central
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 provider "aws" {
   alias  = "ap_southeast"
   region = "ap-southeast-1" # Example region for AP Southeast
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_db_instance" "primary" {
@@ -32,7 +69,7 @@ resource "aws_db_instance" "primary" {
 
 resource "aws_db_instance" "replica_us_east" {
   provider             = aws.us_east
-  replicate_source_db  = aws_db_instance.primary.identifier
+  replicate_source_db  = aws_db_instance.primary.arn
   instance_class       = "db.t3.micro"
   identifier           = "mydb-replica-us-east"
   skip_final_snapshot  = true
@@ -40,7 +77,7 @@ resource "aws_db_instance" "replica_us_east" {
 
 resource "aws_db_instance" "replica_eu_central" {
   provider             = aws.eu_central
-  replicate_source_db  = aws_db_instance.primary.identifier
+  replicate_source_db  = aws_db_instance.primary.arn
   instance_class       = "db.t3.micro"
   identifier           = "mydb-replica-eu-central"
   skip_final_snapshot  = true
@@ -48,7 +85,7 @@ resource "aws_db_instance" "replica_eu_central" {
 
 resource "aws_db_instance" "replica_ap_southeast" {
   provider             = aws.ap_southeast
-  replicate_source_db  = aws_db_instance.primary.identifier
+  replicate_source_db  = aws_db_instance.primary.arn
   
   instance_class       = "db.t3.micro"
   identifier           = "mydb-replica-ap-southeast"
@@ -57,12 +94,15 @@ resource "aws_db_instance" "replica_ap_southeast" {
 
 # Route53 Hosted Zone
 resource "aws_route53_zone" "main" {
+  provider = aws.main
   name = "example53.com"
 }
 
 
 # Route53 Records for each RDS Read Replica with a Weighted Routing Policy
 resource "aws_route53_record" "replica_us_east_cname" {
+  provider = aws.main
+
   zone_id = aws_route53_zone.main.zone_id
   name    = "us.east.example53.com"
   type    = "CNAME"
@@ -75,6 +115,8 @@ resource "aws_route53_record" "replica_us_east_cname" {
 }
 
 resource "aws_route53_record" "replica_eu_central_cname" {
+  provider = aws.main
+
   zone_id = aws_route53_zone.main.zone_id
   name    = "eu.central.example53.com"
   type    = "CNAME"
@@ -87,6 +129,8 @@ resource "aws_route53_record" "replica_eu_central_cname" {
 }
 
 resource "aws_route53_record" "replica_ap_southeast_cname" {
+  provider = aws.main
+
   zone_id = aws_route53_zone.main.zone_id
   name    = "ap.southeast.example53.com"
   type    = "CNAME"
