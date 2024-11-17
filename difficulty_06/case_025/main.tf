@@ -1,17 +1,42 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+
+      configuration_aliases = [ aws.us_east_1, aws.eu_west_1 ]
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
   alias  = "us_east_1"
   region = "us-east-1"
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 provider "aws" {
   alias  = "eu_west_1"
   region = "eu-west-1"
+
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 
-resource "aws_iam_role" "eb_ec2_role3" {
-    provider = aws.us_east_1
-  name = "elastic_beanstalk_ec2_role3"
+resource "aws_iam_role" "eb_ec2_role" {
+  provider = aws.us_east_1
+  name = "elastic_beanstalk_ec2_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -28,18 +53,18 @@ resource "aws_iam_role" "eb_ec2_role3" {
 }
 
 # Attach the AWS managed policy for Elastic Beanstalk to the role
-resource "aws_iam_role_policy_attachment" "eb_managed_policy3" {
-    provider = aws.us_east_1
-  role       = aws_iam_role.eb_ec2_role3.name
+resource "aws_iam_role_policy_attachment" "eb_managed_policy" {
+  provider = aws.us_east_1
+  role       = aws_iam_role.eb_ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier"
 }
 
 
 # Create an instance profile tied to the role
-resource "aws_iam_instance_profile" "eb_ec2_profile3" {
-    provider = aws.us_east_1
-  name = "elastic_beanstalk_ec2_profile3"
-  role = aws_iam_role.eb_ec2_role3.name
+resource "aws_iam_instance_profile" "eb_ec2_profile" {
+  provider = aws.us_east_1
+  name = "elastic_beanstalk_ec2_profile"
+  role = aws_iam_role.eb_ec2_role.name
 }
 
 # RDS in US East (N. Virginia)
@@ -68,10 +93,9 @@ resource "aws_elastic_beanstalk_environment" "myenv_us_east" {
   provider            = aws.us_east_1
   name                = "my-application-env-us-east"
   application         = aws_elastic_beanstalk_application.myapp_us_east.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
-
-    setting {
+  setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DB_HOST"
     value     = aws_db_instance.main_db_us_east.address
@@ -89,11 +113,11 @@ resource "aws_elastic_beanstalk_environment" "myenv_us_east" {
     value     = aws_db_instance.main_db_us_east.address
   }
 
-      setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile3.name
-    }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }
 
 # RDS in EU West (Ireland)
@@ -122,9 +146,9 @@ resource "aws_elastic_beanstalk_environment" "myenv_eu_west" {
   provider            = aws.eu_west_1
   name                = "my-application-env-eu-west"
   application         = aws_elastic_beanstalk_application.myapp_eu_west.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.11 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
-setting {
+  setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "DB_HOST"
     value     = aws_db_instance.main_db_eu_west.address
@@ -142,35 +166,35 @@ setting {
     value     = aws_db_instance.main_db_eu_west.address
   }
 
-      setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile3.name
-    }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }
 
 # Main Route 53 Hosted Zone
 resource "aws_route53_zone" "main" {
-    provider = aws.us_east_1
+  provider = aws.us_east_1
   name = "myapp.com"
 }
 
 # Latency Based Routing in Route 53 for US East Elastic Beanstalk Environment
 resource "aws_route53_record" "eb_env_us_east" {
-    provider = aws.us_east_1
+  provider = aws.us_east_1
   zone_id = aws_route53_zone.main.zone_id
   name    = "us-east.myapp.com"
   type    = "CNAME"
   ttl     = "60"
   records = [aws_elastic_beanstalk_environment.myenv_us_east.cname]
-    set_identifier = "EastEnv"
+  set_identifier = "EastEnv"
   latency_routing_policy {
     region = "us-east-1"
   }
 }
 
 resource "aws_route53_record" "eb_env_eu_west" {
-    provider = aws.eu_west_1
+  provider = aws.eu_west_1
   zone_id = aws_route53_zone.main.zone_id
   name    = "eu-west.myapp.com"
   type    = "CNAME"

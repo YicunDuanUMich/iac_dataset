@@ -1,13 +1,29 @@
-provider "aws" {
-  region = "us-east-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+
 resource "aws_lex_bot" "pizza_order_bot" {
-  create_version = false
+  name = "PizzaOrderBot"
   description = "Pizza order bot"
   idle_session_ttl_in_seconds = 600
-  name = "PizzaOrderBot"
-
+  create_version = false
   child_directed = false
 
   abort_statement {
@@ -29,20 +45,26 @@ resource "aws_lex_bot" "pizza_order_bot" {
     intent_name = aws_lex_intent.OrderPizzaIntent.name
     intent_version = aws_lex_intent.OrderPizzaIntent.version
   }
-
-  depends_on = [aws_lex_intent.OrderPizzaIntent]
 }
 
 resource "aws_lex_intent" "OrderPizzaIntent" {
   name = "OrderPizzaIntent"
   create_version = true
 
+  sample_utterances = [
+    "I would like to pick up a pizza",
+    "I would like to order some pizzas",
+  ]
+
   slot {
-    description = "Type of pizza to order"
     name = "PizzaType"
-    priority = 0
-    sample_utterances = ["I want a {PizzaType} pizza.", "A {PizzaType} pizza please."]
+    description = "Type of pizza to order"
+    priority = 1  # must be in [1, 100]
+    slot_type = aws_lex_slot_type.PizzaType.name
+    slot_type_version = aws_lex_slot_type.PizzaType.version
     slot_constraint = "Required"
+
+    sample_utterances = ["I want a {PizzaType} pizza.", "A {PizzaType} pizza please."]
 
     value_elicitation_prompt {
       max_attempts = 2
@@ -51,8 +73,6 @@ resource "aws_lex_intent" "OrderPizzaIntent" {
         content_type = "PlainText"
       }
     }
-
-    slot_type = "AMAZON.AlphaNumeric"
   }
 
   confirmation_prompt {
@@ -62,6 +82,7 @@ resource "aws_lex_intent" "OrderPizzaIntent" {
       content_type = "PlainText"
     }
   }
+
   rejection_statement {
     message {
         content = "Sorry, I don't know how to help then"
@@ -88,8 +109,6 @@ resource "aws_lex_intent" "OrderPizzaIntent" {
   fulfillment_activity {
     type = "ReturnIntent"
   }
-
-  depends_on = [aws_lex_slot_type.PizzaType]
 }
 
 resource "aws_lex_slot_type" "PizzaType" {

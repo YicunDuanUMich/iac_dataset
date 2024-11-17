@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
   region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 variable "cluster_name" {
@@ -13,13 +29,47 @@ resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 }
 
-resource "aws_subnet" "test_eks" {
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+resource "aws_subnet" "test_eks_1" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.1.0/24"
 
-  tags = {
-    Name = "Main"
-  }
+  availability_zone = data.aws_availability_zones.available.names[0]
+}
+
+resource "aws_subnet" "test_eks_2" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.2.0/24"
+
+  availability_zone = data.aws_availability_zones.available.names[1]
+}
+
+resource "aws_iam_role" "example" {
+  name = "${var.cluster_name}-eks"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
+      }
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.example.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_service_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  role       = aws_iam_role.example.name
 }
 
 resource "aws_eks_cluster" "example" {
@@ -27,7 +77,7 @@ resource "aws_eks_cluster" "example" {
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    subnet_ids = aws_subnet.test_eks.*.id
+    subnet_ids = [ aws_subnet.test_eks_1.id, aws_subnet.test_eks_2.id ]
   }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
@@ -54,29 +104,4 @@ resource "aws_eks_cluster" "example" {
     when    = destroy
     command = "kubectl config unset contexts.${self.arn}"
   }
-}
-
-resource "aws_iam_role" "example" {
-  name = "${var.cluster_name}-eks"
-
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "eks.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.example.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_service_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = aws_iam_role.example.name
 }
