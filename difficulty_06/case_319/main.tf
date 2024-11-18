@@ -1,31 +1,82 @@
-provider "aws" {
-  region = "us-west-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_s3_bucket" "video_content" {
-  bucket = "video-content-bucket"
 
-  tags = {
-    Application = "netflix"
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
   }
 }
 
-locals {
-  s3_origin_id = "s3_video_content_origin"
+resource "aws_s3_bucket" "website_content" {
+  bucket_prefix = "website-content-"
 }
 
-resource "aws_cloudfront_origin_access_control" "netflix_cf" {
-  name                              = "netflix_cf"
+resource "aws_s3_object" "put_website" {
+  bucket = aws_s3_bucket.website_content.bucket
+  key = "index.html"
+  source = "./supplement/index.html"
+  content_type = "text/html"
+}
+
+resource "aws_s3_object" "put_website_css" {
+  bucket = aws_s3_bucket.website_content.bucket
+  key = "css/style.css"
+  source = "./supplement/css/style.css"
+  content_type = "text/css"
+}
+
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.website_content.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action = "s3:GetObject"
+        Resource = "${aws_s3_bucket.website_content.arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = aws_cloudfront_distribution.my_distribution.arn
+          }
+        }
+      }
+    ]
+  })
+}
+
+
+locals {
+  s3_origin_id = "s3_website_origin"
+}
+
+resource "aws_cloudfront_origin_access_control" "s3_oac" {
+  name                              = "s3-oac"
   description                       = "aws access control policy"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_cloudfront_distribution" "netflix_distribution" {
+resource "aws_cloudfront_distribution" "my_distribution" {
   origin {
-    domain_name              = aws_s3_bucket.video_content.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.netflix_cf.id
+    domain_name              = aws_s3_bucket.website_content.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
     origin_id                = local.s3_origin_id
   }
 
@@ -61,32 +112,24 @@ resource "aws_cloudfront_distribution" "netflix_distribution" {
     }
   }
 
-  tags = {
-    Application = "netflix"
-  }
-
   viewer_certificate {
     cloudfront_default_certificate = true
   }
 }
 
 # Route53
-resource "aws_route53_zone" "netflix_zone" {
-  name = "netflix.com"
-
-  tags = {
-    Application = "netflix"
-  }
+resource "aws_route53_zone" "my_zone" {
+  name = "my-test-cloudfront.com"
 }
 
 resource "aws_route53_record" "cdn_ipv4" {
   type    = "A"
   name    = "cdn"
-  zone_id = aws_route53_zone.netflix_zone.zone_id
+  zone_id = aws_route53_zone.my_zone.zone_id
 
   alias {
-    name                   = aws_cloudfront_distribution.netflix_distribution.domain_name
-    zone_id                = aws_cloudfront_distribution.netflix_distribution.hosted_zone_id
+    name                   = aws_cloudfront_distribution.my_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.my_distribution.hosted_zone_id
     evaluate_target_health = true
   }
 }
@@ -94,11 +137,11 @@ resource "aws_route53_record" "cdn_ipv4" {
 resource "aws_route53_record" "cdn_ipv6" {
   type    = "AAAA" # ipv6 is enabled
   name    = "cdn"
-  zone_id = aws_route53_zone.netflix_zone.zone_id
+  zone_id = aws_route53_zone.my_zone.zone_id
 
   alias {
-    name                   = aws_cloudfront_distribution.netflix_distribution.domain_name
-    zone_id                = aws_cloudfront_distribution.netflix_distribution.hosted_zone_id
+    name                   = aws_cloudfront_distribution.my_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.my_distribution.hosted_zone_id
     evaluate_target_health = true
   }
 }
