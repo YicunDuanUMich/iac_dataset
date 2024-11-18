@@ -100,7 +100,7 @@ resource "aws_cloudwatch_log_group" "test" {
 }
 
 resource "aws_s3_bucket" "bucket" {
-bucket = "msk-broker-logs-bucket-123"
+    bucket_prefix = "msk-broker-logs-"
 }
 
 resource "aws_s3_bucket_ownership_controls" "example" {
