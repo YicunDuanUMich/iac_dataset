@@ -2,66 +2,63 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
-}
+  region  = "us-east-1"
+  profile = "admin-1"
 
-variable "vpc_id" {
-  type        = string
-  description = "The VPC to deploy the components within"
-  default = "vpc-12345678"
-}
-
-variable "pg_port" {
-  type        = number
-  description = "Postgres connection port"
-  default     = 5432
-}
-
-variable "pg_superuser_username" {
-  type        = string
-  description = "Username for the 'superuser' user in the Postgres instance"
-  default     = "superuser"
-}
-
-variable "pg_superuser_password" {
-  type        = string
-  sensitive   = true
-  description = "Password for the 'superuser' user in the Postgres instance"
-  default = "random-password"
-}
-
-resource "aws_db_subnet_group" "postgres" {
-  name       = "pgsubnetgrp"
-  subnet_ids = [aws_subnet.main1.id, aws_subnet.main2.id]
-}
-
-resource "aws_subnet" "main1" {
-  vpc_id     = var.vpc_id
-  cidr_block = "10.0.1.0/24"
-
-  tags = {
-    Name = "Main"
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
   }
 }
 
-resource "aws_subnet" "main2" {
-  vpc_id     = var.vpc_id
-  cidr_block = "10.0.1.0/24"
-
-  tags = {
-    Name = "Main"
-  }
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
-resource "aws_db_parameter_group" "postgres" {
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+
+  name = "main-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs                  = data.aws_availability_zones.available.names
+  public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
+}
+
+resource "aws_db_subnet_group" "db-subnet-group" {
+  name       = "db-subnet-group"
+  subnet_ids = module.vpc.public_subnets
+}
+
+resource "aws_security_group" "db-sg" {
+  name = "db-sg"
+  vpc_id = module.vpc.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db-sg-ingress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.db-sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "db-sg-egress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.db-sg.id
+}
+
+resource "aws_db_parameter_group" "postgre-param-group" {
   name   = "pgparamgrp15"
   family = "postgres15"
 
@@ -80,57 +77,31 @@ resource "aws_db_parameter_group" "postgres" {
   }
 }
 
-resource "aws_security_group" "pg" {
-  name   = "pg"
-  vpc_id = var.vpc_id
-
-  ingress {
-    description = "Postgres from internet"
-    from_port   = 5432
-    to_port     = 5432
-    cidr_blocks = ["0.0.0.0/0"]
-    protocol    = "TCP"
-    self        = false
-  }
-  egress {
-    description = "Postgres to internet"
-    from_port   = 5432
-    to_port     = 5432
-    cidr_blocks = ["0.0.0.0/0"]
-    protocol    = "TCP"
-    self        = false
-  }
-}
-
-resource "aws_kms_key" "rds_key" {
+resource "aws_kms_key" "rds-key" {
   description             = "kmsrds"
   deletion_window_in_days = 14
-  tags                    = { Name = "kmsrds" }
 }
 
 resource "aws_db_instance" "postgres" {
   identifier                      = "pg"
   final_snapshot_identifier       = "pgsnapshot"
-  allocated_storage               = 200
-  apply_immediately               = true
+  allocated_storage               = 5
   backup_retention_period         = 7
-  db_subnet_group_name            = aws_db_subnet_group.postgres.name
-  parameter_group_name            = aws_db_parameter_group.postgres.name
+  db_subnet_group_name            = aws_db_subnet_group.db-subnet-group.id
+  parameter_group_name            = aws_db_parameter_group.postgre-param-group.name
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   engine                          = "postgres"
   engine_version                  = "15"
-  allow_major_version_upgrade     = true
   instance_class                  = "db.t3.micro"
   db_name                         = "postgres" # Initial database name
-  username                        = var.pg_superuser_username
-  port                            = var.pg_port
-  password                        = var.pg_superuser_password
-  vpc_security_group_ids          = [aws_security_group.pg.id]
+  username                        = "myusername"
+  password                        = "mypassword"
+  vpc_security_group_ids          = [aws_security_group.db-sg.id]
   # Other security settings
-  publicly_accessible = false
-  multi_az            = true
-  storage_encrypted   = true
-  kms_key_id          = aws_kms_key.rds_key.arn
+  publicly_accessible             = true
+  multi_az                        = true
+  storage_encrypted               = true
+  kms_key_id                      = aws_kms_key.rds-key.arn
   # Default daily backup window
   # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html#USER_WorkingWithAutomatedBackups.BackupWindow
 }

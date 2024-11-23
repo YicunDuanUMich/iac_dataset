@@ -1,1 +1,1 @@
-sets up a 500 GB PostgreSQL 15 instance on AWS RDS within specific public and private subnets for running Airbyte connector test cases, using managed settings for low maintenance and ensuring it's not publicly accessible.
+Set up a PostgreSQL 15 instance (storage is 500GB) on AWS RDS within specific public subnets for running Airbyte connector test cases, using managed settings for low maintenance.

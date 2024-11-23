@@ -1,1 +1,1 @@
-The infrastructure for a video streaming site that has multiple servers to balance load. Accomplish this using the following services: AWS Load Balancing, AWS Route53, AWS S3, and AWS VPC, AWS EC2. Add any necessary services.
+The infrastructure for a video streaming site that has multiple servers to balance load. Accomplish this using the following services: AWS Load Balancing, AWS Route53, and AWS VPC module, AWS EC2. Add any necessary services.

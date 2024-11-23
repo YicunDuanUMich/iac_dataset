@@ -2,105 +2,106 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
-}
+  region  = "us-east-1"
+  profile = "admin-1"
 
-resource "aws_db_subnet_group" "default" {
-  name       = "dbtunnel-public-dbsubnet-group"
-  subnet_ids = [aws_subnet.main-subnet-public-dbtunnel.id, aws_subnet.main-subnet-private-dbtunnel.id]
-
-  tags = {
-    Name = "dbtunnel-public-dbsubnet-group"
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
   }
 }
 
-# This is mainly a placeholder for settings we might want to configure later.
-resource "aws_db_parameter_group" "default" {
-  name        = "rds-pg"
-  family      = "postgres12"
-  description = "RDS default parameter group"
-
-  #parameter {
-  #  name  = "character_set_client"
-  #  value = "utf8"
-  #}
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
-# Create the postgres instance on RDS so it's fully managed and low maintenance.
-# For now all we care about is testing with postgres.
-resource "aws_db_instance" "default" {
-  allocated_storage    = 500
-  engine               = "postgres"
-  engine_version       = "15"
-  identifier           = "tunnel-dev"
-  instance_class       = "db.t3.micro"
-  db_subnet_group_name = aws_db_subnet_group.default.name 
-  db_name              = "airbyte"
-  username             = "airbyte"
-  password             = "password"
-  parameter_group_name = aws_db_parameter_group.default.name
-  publicly_accessible = false
-  skip_final_snapshot  = true
-  apply_immediately    = true
-  vpc_security_group_ids = [aws_security_group.dbtunnel-sg.id]
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+
+  name = "main-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs                  = data.aws_availability_zones.available.names
+  public_subnets       = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
 }
 
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+resource "aws_db_subnet_group" "db-subnet-group" {
+  name       = "db-subnet-group"
+  subnet_ids = module.vpc.public_subnets
 }
 
-# Bastion host sits inside a public subnet
-resource "aws_subnet" "main-subnet-public-dbtunnel" {
-    vpc_id = aws_vpc.main.id
-    cidr_block = "10.0.0.0/16"
-    map_public_ip_on_launch = "true" 
-    availability_zone = "us-west-2"
-    tags = {
-        Name = "public-dbtunnel"
-    }
+resource "aws_security_group" "db-sg" {
+  name = "db-sg"
+  vpc_id = module.vpc.vpc_id
 }
 
-# Because an RDS instance requires two AZs we need another subnet for it
-resource "aws_subnet" "main-subnet-private-dbtunnel" {
-    vpc_id = aws_vpc.main.id
-    cidr_block = "10.0.0.0/16"
-    map_public_ip_on_launch = "false"
-    availability_zone = "us-west-2"
-    tags = {
-        Name = "private-dbtunnel"
-    }
+resource "aws_vpc_security_group_ingress_rule" "db-sg-ingress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.db-sg.id
 }
 
-resource "aws_security_group" "dbtunnel-sg" {
-  name        = "dbtunnel-sg-allow-postgres"
-  description = "Allow inbound traffic but only from the dbtunnel subnet"
-  vpc_id      = aws_vpc.main.id
+resource "aws_vpc_security_group_egress_rule" "db-sg-egress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.db-sg.id
+}
 
-  ingress {
-    description      = "tcp on 5432 from subnet"
-    from_port        = 5432
-    to_port          = 5432
-    protocol         = "tcp"
-    cidr_blocks      = [aws_subnet.main-subnet-public-dbtunnel.cidr_block]
+resource "aws_db_parameter_group" "postgre-param-group" {
+  name   = "pgparamgrp15"
+  family = "postgres15"
+
+  parameter {
+    name  = "password_encryption"
+    value = "scram-sha-256"
   }
 
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+  parameter {
+    name  = "rds.force_ssl"
+    value = "0"
   }
 
-  tags = {
-    Name = "dbtunnel-sg-allow-postgres"
+  lifecycle {
+    create_before_destroy = true
   }
+}
+
+resource "aws_kms_key" "rds-key" {
+  description             = "kmsrds"
+  deletion_window_in_days = 14
+}
+
+resource "aws_db_instance" "postgres" {
+  identifier                      = "pg"
+  skip_final_snapshot             = true
+  allocated_storage               = 500
+  backup_retention_period         = 7
+  db_subnet_group_name            = aws_db_subnet_group.db-subnet-group.id
+  parameter_group_name            = aws_db_parameter_group.postgre-param-group.name
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  engine                          = "postgres"
+  engine_version                  = "15"
+  instance_class                  = "db.t3.micro"
+  db_name                         = "postgres" # Initial database name
+  username                        = "myusername"
+  password                        = "mypassword"
+  vpc_security_group_ids          = [aws_security_group.db-sg.id]
+  # Other security settings
+  publicly_accessible             = true
+  multi_az                        = true
+  storage_encrypted               = true
+  kms_key_id                      = aws_kms_key.rds-key.arn
+  # Default daily backup window
+  # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithAutomatedBackups.html#USER_WorkingWithAutomatedBackups.BackupWindow
 }

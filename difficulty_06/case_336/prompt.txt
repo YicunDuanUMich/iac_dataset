@@ -1,1 +1,1 @@
-sets up a PostgreSQL 12.6 instance on AWS RDS within specific public and private subnets for running Airbyte connector test cases, using managed settings for low maintenance and ensuring it's not publicly accessible. the database should skip finale snapshot, and any change on it will apply immediately.
+Set up a PostgreSQL 15 instance on AWS RDS within specific public subnets for running Airbyte connector test cases, using managed settings for low maintenance. The database should skip finale snapshot, and any change on it will apply immediately.
