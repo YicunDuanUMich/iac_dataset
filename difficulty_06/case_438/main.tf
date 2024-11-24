@@ -2,15 +2,20 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_vpc" "main" {
@@ -18,16 +23,20 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 }
 
+data "aws_availability_zones" "azs" {
+    state = "available"
+}
+
 resource "aws_subnet" "zonea" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.0.0/24"
-  availability_zone = "us-west-1a"
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[0]
 }
 
 resource "aws_subnet" "zoneb" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-west-1b"
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[1]
 }
 
 resource "aws_internet_gateway" "gateway" {
