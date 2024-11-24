@@ -1,1 +1,1 @@
-sets up an AWS RDS Aurora MySQL cluster with a proxy for enhanced connection management, including VPC, subnets, security groups, IAM roles, and Secrets Manager for secure credential storage.  the rds cluster should have final snapshot with identifier "snapshot"
+Set up an AWS RDS Aurora MySQL cluster with a proxy for enhanced connection management, including VPC, subnets, security groups, IAM roles, and Secrets Manager for secure credential storage. The rds cluster should have final snapshot with identifier "snapshot"

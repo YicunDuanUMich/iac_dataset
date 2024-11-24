@@ -2,178 +2,160 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
-}
-# Define the provider block for AWS
-provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_db_proxy" "rds_proxy" {
-  name                   = "${aws_rds_cluster.rds_cluster.cluster_identifier}-proxy"
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+
+  name                 = "main-vpc"
+  cidr                 = "10.0.0.0/16"
+  azs                  = data.aws_availability_zones.available.names
+  private_subnets      = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets       = ["10.0.3.0/24", "10.0.4.0/24"]
+}
+
+resource "aws_security_group" "rds-proxy-sg" {
+  name        = "rds-proxy-sg"
+  vpc_id      = module.vpc.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db-proxy-sg-ingress-rule" {
+  from_port       = 3306
+  to_port         = 3306
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.rds-proxy-sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "db-proxy-sg-egress-rule" {
+  from_port       = 3306
+  to_port         = 3306
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.rds-proxy-sg.id
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = "main"
+  subnet_ids = module.vpc.private_subnets
+}
+
+resource "aws_rds_cluster" "example" {
+  cluster_identifier      = "example-cluster"
+  engine                  = "aurora-mysql"
+  engine_version          = "8.0.mysql_aurora.3.08.0"
+  master_username         = "myusername"
+  master_password         = "password123"
+  database_name           = "exampledb"
+  backup_retention_period = 5
+  preferred_backup_window = "07:00-09:00"
+  skip_final_snapshot     = true
+  vpc_security_group_ids  = [aws_security_group.rds-proxy-sg.id]
+  db_subnet_group_name    = aws_db_subnet_group.main.name
+}
+
+resource "aws_secretsmanager_secret" "db-credentials" {
+  name_prefix = "db-credentials-"
+}
+
+resource "aws_secretsmanager_secret_version" "db-credentials-version" {
+  secret_id     = aws_secretsmanager_secret.db-credentials.id
+  secret_string = jsonencode({
+    username = aws_rds_cluster.example.master_username
+    password = aws_rds_cluster.example.master_password
+  })
+}
+
+resource "aws_iam_role" "rds-proxy-role" {
+  name = "rds-proxy-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "rds.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "rds-proxy-policy" {
+  name        = "rds-proxy-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+        ]
+        Resource = [
+          "${aws_secretsmanager_secret_version.db-credentials-version.arn}",
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach-proxy-policy" {
+  role       = aws_iam_role.rds-proxy-role.name
+  policy_arn = aws_iam_policy.rds-proxy-policy.arn
+}
+
+resource "aws_db_proxy" "example" {
+  name                   = "example-proxy"
   debug_logging          = false
   engine_family          = "MYSQL"
   idle_client_timeout    = 1800
   require_tls            = true
-  role_arn               = aws_iam_role.proxy_role.arn
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  vpc_subnet_ids         = [aws_subnet.rds_subnet_a.id, aws_subnet.rds_subnet_b.id]
+  role_arn               = aws_iam_role.rds-proxy-role.arn
+  vpc_security_group_ids = [aws_security_group.rds-proxy-sg.id]
+  vpc_subnet_ids         = module.vpc.private_subnets
 
   auth {
-    auth_scheme = "SECRETS"
-    description = "RDS proxy auth for ${aws_rds_cluster.rds_cluster.cluster_identifier}"
-    iam_auth    = "DISABLED"
-    secret_arn  = aws_secretsmanager_secret_version.rds_credentials_version.arn
-  }
-
-  tags = {
-    Name = "${aws_rds_cluster.rds_cluster.cluster_identifier}-proxy"
+    auth_scheme  = "SECRETS"
+    secret_arn   = aws_secretsmanager_secret.db-credentials.arn
+    iam_auth     = "DISABLED"
   }
 }
 
-resource "aws_rds_cluster" "rds_cluster" {
-  cluster_identifier      = "rds-cluster"
-  engine                  = "aurora-mysql"
-  engine_version          = "8.0.mysql_aurora.3.02.0"
-  database_name           = "mydatabase"
-  master_username         = "var.db_username"
-  master_password         = "var.db_password"
-  backup_retention_period = 5
-  preferred_backup_window = "07:00-09:00"
+resource "aws_db_proxy_default_target_group" "example" {
+  db_proxy_name = aws_db_proxy.example.name
 
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-
-  db_subnet_group_name = aws_db_subnet_group.rds_subnet_group.name
-
-  skip_final_snapshot = false
-
-  final_snapshot_identifier = "snapshot"
-
-  tags = {
-    Name = "rds-cluster"
+  connection_pool_config {
+    connection_borrow_timeout    = 120
+    init_query                   = "SET x=1, y=2"
+    max_connections_percent      = 100
+    max_idle_connections_percent = 50
+    session_pinning_filters      = ["EXCLUDE_VARIABLE_SETS"]
   }
 }
 
-resource "aws_security_group" "rds_sg" {
-  name   = "rds-cluster-sg"
-  vpc_id = aws_vpc.rds_vpc.id
-
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-    self            = true # This allows instances associated with this security group to accept traffic from other instances associated with the same security group.
-    security_groups = [aws_security_group.ec2_sg.id]
-  }
-
-  # Allow to send TCP traffic on port 3306 to any IP address
-  egress {
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    self        = true
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "rds-cluster-sg"
-  }
-}
-
-resource "aws_subnet" "rds_subnet_a" {
-  vpc_id            = aws_vpc.rds_vpc.id
-  cidr_block        = "10.0.1.0/24"
-  availability_zone = "eu-central-1a"
-
-  tags = {
-    Name = "subnet-a"
-  }
-}
-
-resource "aws_subnet" "rds_subnet_b" {
-  vpc_id            = aws_vpc.rds_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-central-1b"
-
-  tags = {
-    Name = "subnet-b"
-  }
-}
-
-resource "aws_vpc" "rds_vpc" {
-  cidr_block = "10.0.0.0/16"
-
-  enable_dns_support   = true
-  enable_dns_hostnames = true
-
-  tags = {
-    Name = "vpc"
-  }
-}
-
-resource "aws_security_group" "ec2_sg" {
-  name   = "ec2_name-sg"
-  vpc_id = aws_vpc.rds_vpc.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "sg"
-  }
-}
-
-resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "subnet-group"
-  subnet_ids = [aws_subnet.rds_subnet_a.id, aws_subnet.rds_subnet_b.id]
-
-  tags = {
-    Name        = "subnet-group"
-    Environment = "testing"
-  }
-}
-
-resource "aws_secretsmanager_secret_version" "rds_credentials_version" {
-  secret_id     = aws_secretsmanager_secret.rds_credentials.id
-  secret_string = jsonencode({ "username" : "var.db_username", "password" : "var.db_password" })
-}
-
-resource "aws_iam_role" "proxy_role" {
-  name = "${aws_rds_cluster.rds_cluster.cluster_identifier}-proxy-role"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "rds.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_secretsmanager_secret" "rds_credentials" {
-  name        = "db-secrets"
-  description = "RDS DB credentials"
+resource "aws_db_proxy_target" "example" {
+  db_cluster_identifier = aws_rds_cluster.example.cluster_identifier
+  db_proxy_name          = aws_db_proxy.example.name
+  target_group_name      = aws_db_proxy_default_target_group.example.name
 }

@@ -1,1 +1,1 @@
-sets up an AWS RDS Aurora MySQL cluster with a proxy for enhanced connection management, including VPC, subnets, security groups, IAM roles, and Secrets Manager for secure credential storage. the idle client timeout for proxy should be 1800, and  it should not enable debug logging.
+Set up an AWS RDS Aurora MySQL cluster with a proxy for enhanced connection management, including VPC, subnets, security groups, IAM roles, and Secrets Manager for secure credential storage. the idle client timeout for proxy should be 1800, and it should not enable debug logging.
