@@ -2,39 +2,77 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_lex_intent" "order_flowers" {
+  name = "OrderFlowers"
+  description = "Intent to order a bouquet of flowers for pick up"
+
+  sample_utterances = [
+    "I would like to pick up flowers",
+    "I would like to order some flowers",
+  ]
+
+  slot {
+    name                     = "FlowerType"
+    description              = "Type of flower to order"
+    slot_constraint          = "Required" 
+    slot_type                = "AMAZON.AlphaNumeric"
+    priority                 = 1
+
+    sample_utterances = ["I would like to get {FlowerType} flower."]
+
+    value_elicitation_prompt {
+      message {
+        content             = "What type of flower would you like?"
+        content_type        = "PlainText"
+      }
+      max_attempts         = 2
+    }
+  }
+
+  slot {
+    name                     = "PickupDate"
+    description              = "Date of flower pickup"
+    slot_constraint          = "Required" 
+    slot_type                = "AMAZON.DATE"
+    priority                 = 2
+
+    value_elicitation_prompt {
+      message {
+        content             = "When would you like to pickup your flower?"
+        content_type        = "PlainText"
+      }
+      max_attempts         = 2
+    }
+  }
+
   confirmation_prompt {
     max_attempts = 2
 
     message {
-      content      = "Okay, your {FlowerType} will be ready for pickup by {PickupTime} on {PickupDate}.  Does this sound okay?"
-      content_type = "PlainText"
-    }
-
-    message {
-      content      = "Okay, your {FlowerType} will be ready for pickup by {PickupTime} on {PickupDate}, and will cost [Price] dollars.  Does this sound okay?"
+      content      = "Okay, your {FlowerType} will be ready for pickup on {PickupDate}.  Does this sound okay?"
       content_type = "PlainText"
     }
   }
-
-  description = "Intent to order a bouquet of flowers for pick up"
 
   fulfillment_activity {
     type = "ReturnIntent"
   }
-
-  name = "OrderFlowers"
 
   rejection_statement {
     message {
@@ -42,22 +80,25 @@ resource "aws_lex_intent" "order_flowers" {
       content_type = "PlainText"
     }
   }
-
-  sample_utterances = [
-    "I would like to pick up flowers",
-    "I would like to order some flowers",
-  ]
 }
 
 resource "aws_lex_bot" "order_flowers" {
+  name     = "OrderFlowers"
+  description = "Bot to order flowers on the behalf of a user"
+  locale   = "en-US"
+  process_behavior = "BUILD"
+  voice_id = "Salli"
+  child_directed = false
+  create_version = false
+  detect_sentiment            = false
+  idle_session_ttl_in_seconds = 600
+
   abort_statement {
     message {
       content_type = "PlainText"
       content      = "Sorry, I am not able to assist at this time"
     }
   }
-
-  child_directed = false
 
   clarification_prompt {
     max_attempts = 2
@@ -67,17 +108,9 @@ resource "aws_lex_bot" "order_flowers" {
       content      = "I didn't understand you, what would you like to do?"
     }
   }
-  description                 = "Bot to order flowers on the behalf of a user"
-  detect_sentiment            = false
-  idle_session_ttl_in_seconds = 600
-
+  
   intent {
     intent_name    = aws_lex_intent.order_flowers.name
     intent_version = aws_lex_intent.order_flowers.version
   }
-
-  locale   = "en-US"
-  name     = "OrderFlowers"
-  process_behavior = "SAVE"
-  voice_id = "Salli"
 }

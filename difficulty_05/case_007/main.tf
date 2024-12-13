@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -37,12 +53,10 @@ resource "aws_elastic_beanstalk_application" "my_api_app" {
   name        = "MyAPIApplication"
 }
 
-
-
 resource "aws_elastic_beanstalk_environment" "my_api_env" {
   name                = "MyApiEnvironment"
   application         = aws_elastic_beanstalk_application.my_api_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.9 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
   # Configure scaling triggers based on CPU usage
   setting {

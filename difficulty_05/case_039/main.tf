@@ -2,15 +2,20 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "test_role8" {
@@ -29,10 +34,6 @@ resource "aws_iam_role" "test_role8" {
       },
     ]
   })
-
-  tags = {
-    tag-key = "test_role8"
-  }
 }
 
 resource "aws_s3_bucket" "apriltwentyninth" {
@@ -51,6 +52,7 @@ resource "aws_codebuild_project" "example7" {
   artifacts {
     location  = aws_s3_bucket.apriltwentyninth.bucket
     type      = "S3"
+    name     = "results.zip"
     path      = "/"
     packaging = "ZIP"
   }
@@ -63,7 +65,7 @@ resource "aws_codebuild_project" "example7" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
+    image                       = "aws/codebuild/standard:7.0-24.10.29"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
 
@@ -71,8 +73,21 @@ resource "aws_codebuild_project" "example7" {
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/neilbalch/SimplePythonTutorial.git"
+    location        = "https://github.com/mitchellh/packer.git"
     git_clone_depth = 1
   }
 
+  source_version = "master"
+
+  secondary_sources {
+    source_identifier = "source2"
+    type            = "GITHUB"
+    location        = "https://github.com/mitchellh/packer.git"
+    git_clone_depth = 1
+  }
+
+  secondary_source_version {
+    source_identifier = "source2"
+    source_version = "master"
+  }
 }

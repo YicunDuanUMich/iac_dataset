@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 
@@ -7,8 +23,8 @@ data "aws_iam_policy_document" "StreamReaderWriter" {
   statement {
     effect = "Allow"
     actions = ["kinesis:DescribeStream",
-      "kinesis:GetShardIterator",
-    "kinesis:GetRecords"]
+               "kinesis:GetShardIterator",
+               "kinesis:GetRecords"]
     resources = [aws_kinesis_stream.test_stream.arn]
   }
 }

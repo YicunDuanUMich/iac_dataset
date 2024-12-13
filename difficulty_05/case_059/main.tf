@@ -1,6 +1,26 @@
-provider "aws" {
-  region = "us-west-2"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
+
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+# even though this program seems to be problematic, it's copied from https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kinesis_firehose_delivery_stream
+# so I'll leave it unmodified
+
 data "aws_iam_policy_document" "firehose_assume_role" {
   statement {
     effect = "Allow"

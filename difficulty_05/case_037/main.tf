@@ -2,17 +2,21 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = "us-west-2"
-}
+  region  = "us-east-1"
+  profile = "admin-1"
 
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
 
 
 resource "aws_iam_role" "example5" {
@@ -31,10 +35,6 @@ resource "aws_iam_role" "example5" {
       },
     ]
   })
-
-  tags = {
-    tag-key = "example"
-  }
 }
 
 resource "aws_s3_bucket" "apriltwentynine" {
@@ -53,10 +53,9 @@ resource "aws_codebuild_project" "example5" {
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
+    image                       = "aws/codebuild/standard:7.0-24.10.29"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
-
   }
 
   logs_config {
@@ -70,9 +69,12 @@ resource "aws_codebuild_project" "example5" {
       location = "${aws_s3_bucket.apriltwentynine.id}/build-log"
     }
   }
+  
   source {
     type            = "GITHUB"
-    location        = "https://github.com/neilbalch/SimplePythonTutorial.git"
+    location        = "https://github.com/mitchellh/packer.git"
     git_clone_depth = 1
   }
-  }
+
+  source_version = "master"
+}

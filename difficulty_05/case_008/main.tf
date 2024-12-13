@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1" 
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -42,7 +58,8 @@ resource "aws_elastic_beanstalk_application" "microservices_app" {
 resource "aws_elastic_beanstalk_environment" "microservice_one_env" {
   name                = "microservice-one"
   application         = aws_elastic_beanstalk_application.microservices_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.9 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
+
   setting {
     namespace = "aws:autoscaling:asg"
     name      = "MinSize"
@@ -59,14 +76,14 @@ resource "aws_elastic_beanstalk_environment" "microservice_one_env" {
       namespace = "aws:autoscaling:launchconfiguration"
       name      = "IamInstanceProfile"
       value     = aws_iam_instance_profile.eb_ec2_profile.name
-    }
+  }
 }
 
 # Second microservice environment
 resource "aws_elastic_beanstalk_environment" "microservice_two_env" {
   name                = "microservice-two"
   application         = aws_elastic_beanstalk_application.microservices_app.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.0.9 running Python 3.11"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
 
   setting {
     namespace = "aws:autoscaling:asg"
@@ -80,9 +97,9 @@ resource "aws_elastic_beanstalk_environment" "microservice_two_env" {
     value     = "4"
   }
 
-    setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile.name
-    }
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }

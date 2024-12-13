@@ -2,15 +2,20 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 
@@ -30,14 +35,6 @@ resource "aws_iam_role" "example" {
       },
     ]
   })
-
-  tags = {
-    tag-key = "example"
-  }
-}
-
-resource "aws_s3_bucket" "apriltwentyseventh" {
-  bucket = "apriltwentyseventh"
 }
 
 resource "aws_codebuild_project" "example" {
@@ -51,13 +48,13 @@ resource "aws_codebuild_project" "example" {
   }
 
   cache {
-    type     = "S3"
-    location = aws_s3_bucket.apriltwentyseventh.bucket
+    type  = "LOCAL"
+    modes = ["LOCAL_DOCKER_LAYER_CACHE", "LOCAL_SOURCE_CACHE"]
   }
 
   environment {
     compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
+    image                       = "aws/codebuild/standard:7.0-24.10.29"
     type                        = "LINUX_CONTAINER"
     image_pull_credentials_type = "CODEBUILD"
 
@@ -75,11 +72,13 @@ resource "aws_codebuild_project" "example" {
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/neilbalch/SimplePythonTutorial.git"
+    location        = "https://github.com/mitchellh/packer.git"
     git_clone_depth = 1
+
+    git_submodules_config {
+      fetch_submodules = true
+    }
   }
 
-  tags = {
-    Environment = "Test"
-  }
+  source_version = "master"
 }

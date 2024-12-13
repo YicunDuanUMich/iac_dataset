@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_iam_role" "eb_ec2_role" {
@@ -39,7 +55,7 @@ resource "aws_s3_bucket" "sampleapril26426" {
 resource "aws_s3_object" "examplebucket_object" {
   key    = "randofile"
   bucket = aws_s3_bucket.sampleapril26426.id
-  source = "app.zip"
+  source = "./supplement/app.zip"
 }
 
 # Define the Elastic Beanstalk application
@@ -60,12 +76,12 @@ resource "aws_elastic_beanstalk_application_version" "version" {
 resource "aws_elastic_beanstalk_environment" "eb-env" {
   name                = "awesomeenv"
   application         = aws_elastic_beanstalk_application.myapp.name
-  solution_stack_name = "64bit Amazon Linux 2023 v4.2.3 running Corretto 17"
+  solution_stack_name = "64bit Amazon Linux 2023 v4.3.0 running Python 3.9"
+  version_label = aws_elastic_beanstalk_application_version.version.name
 
-    setting {
-      namespace = "aws:autoscaling:launchconfiguration"
-      name      = "IamInstanceProfile"
-      value     = aws_iam_instance_profile.eb_ec2_profile.name
-    }
-
+  setting {
+    namespace = "aws:autoscaling:launchconfiguration"
+    name      = "IamInstanceProfile"
+    value     = aws_iam_instance_profile.eb_ec2_profile.name
+  }
 }
