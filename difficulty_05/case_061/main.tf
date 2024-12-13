@@ -1,23 +1,21 @@
-provider "aws" {
-  region = "us-west-2"
-}
-
-data "aws_iam_policy_document" "firehose_assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["firehose.amazonaws.com"]
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
     }
-
-    actions = ["sts:AssumeRole"]
   }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_iam_role" "firehose_role" {
-  name               = "firehose_test_role"
-  assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_s3_bucket" "januarythird" {
@@ -39,6 +37,24 @@ resource "aws_elasticsearch_domain" "test_cluster" {
   }
 }
 
+data "aws_iam_policy_document" "firehose_assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["firehose.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "firehose_role" {
+  name               = "firehose_test_role"
+  assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
+}
+
 data "aws_iam_policy_document" "firehose-elasticsearch" {
   statement {
     effect  = "Allow"
@@ -57,9 +73,28 @@ resource "aws_iam_role_policy" "firehose-elasticsearch" {
   policy = data.aws_iam_policy_document.firehose-elasticsearch.json
 }
 
-resource "aws_kinesis_firehose_delivery_stream" "test" {
-  depends_on = [aws_iam_role_policy.firehose-elasticsearch]
+resource "aws_elasticsearch_domain_policy" "main" {
+  domain_name = aws_elasticsearch_domain.test_cluster.domain_name
 
+  access_policies = <<POLICIES
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "es:*",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Condition": {
+                "IpAddress": {"aws:SourceIp": "127.0.0.1/32"}
+            },
+            "Resource": "${aws_elasticsearch_domain.test_cluster.arn}/*"
+        }
+    ]
+}
+POLICIES
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "test" {
   name        = "terraform-kinesis-firehose-es"
   destination = "elasticsearch"
 
@@ -72,6 +107,9 @@ resource "aws_kinesis_firehose_delivery_stream" "test" {
     s3_configuration {
       role_arn   = aws_iam_role.firehose_role.arn
       bucket_arn = aws_s3_bucket.januarythird.arn
+      buffering_size     = 10
+      buffering_interval = 400
+      compression_format = "GZIP"
     }
   }
 }

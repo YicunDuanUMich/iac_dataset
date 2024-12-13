@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 variable "cluster_name" {
@@ -19,37 +35,21 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "private-us-east-1a" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.1.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_subnet" "private-us-east-1b" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.2.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_subnet" "public-us-east-1a" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.3.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_subnet" "public-us-east-1b" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.4.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_iam_role" "eks-cluster" {
@@ -76,6 +76,11 @@ resource "aws_iam_role_policy_attachment" "amazon-eks-cluster-policy" {
   role       = aws_iam_role.eks-cluster.name
 }
 
+resource "aws_iam_role_policy_attachment" "eks_service_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  role       = aws_iam_role.eks-cluster.name
+}
+
 resource "aws_eks_cluster" "cluster" {
   name     = var.cluster_name
   version  = var.cluster_version
@@ -90,5 +95,6 @@ resource "aws_eks_cluster" "cluster" {
     ]
   }
 
-  depends_on = [aws_iam_role_policy_attachment.amazon-eks-cluster-policy]
+  depends_on = [aws_iam_role_policy_attachment.amazon-eks-cluster-policy,
+                aws_iam_role_policy_attachment.eks_service_policy]
 }
