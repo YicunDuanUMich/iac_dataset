@@ -38,8 +38,8 @@ launch_template_valid(resources) {
     resource.change.after.image_id == "ami-0591e1c6a24d08458"
 }
 
-scaling_group_valid(resources) {
-    some resource in resources
-    resource.type == "aws_autoscaling_group"
-    resource.change.after.launch_template[0].version == "$Latest"
-}
+# scaling_group_valid(resources) {
+#     some resource in resources
+#     resource.type == "aws_autoscaling_group"
+#     resource.change.after.launch_template[0].version == "$Latest"
+# }

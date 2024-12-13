@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_vpc" "main" {
@@ -9,19 +25,11 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "example1" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.1.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_subnet" "example2" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.2.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_iam_role" "example" {
@@ -53,6 +61,11 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSVPCResourceControlle
   role       = aws_iam_role.example.name
 }
 
+resource "aws_iam_role_policy_attachment" "eks_service_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+  role       = aws_iam_role.example.name
+}
+
 resource "aws_eks_cluster" "example" {
   name     = "example"
   role_arn = aws_iam_role.example.arn
@@ -66,6 +79,7 @@ resource "aws_eks_cluster" "example" {
   depends_on = [
     aws_iam_role_policy_attachment.example-AmazonEKSClusterPolicy,
     aws_iam_role_policy_attachment.example-AmazonEKSVPCResourceController,
+    aws_iam_role_policy_attachment.eks_service_policy,
   ]
 }
 

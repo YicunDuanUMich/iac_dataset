@@ -1,38 +1,25 @@
-// This file is used to create the S3 bucket and DynamoDB table to store Terraform state
-// Required AWS permissions:
-// - s3:CreateBucket
-// - s3:PutEncryptionConfiguration
-// - s3:PutBucketVersioning
-// - s3:PutBucketPublicAccessBlock
-// - dynamodb:CreateTable
-// - dynamodb:PutItem
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
 
-variable "s3_region" {
-  description = "The AWS region to deploy to"
-  default = "us-west-2"
-}
-
-variable "s3_state_bucket" {
-  description = "The name of the S3 bucket to store Terraform state"
-  default = "iac-misc-terraform-state"
-}
-
-variable "s3_state_lock_table" {
-  description = "The name of the DynamoDB table to store Terraform locks"
-  default = "iac-misc-terraform-locks"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = var.s3_region
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.s3_state_bucket
-
-  # Prevent accidental deletion of this S3 bucket
-  lifecycle {
-    prevent_destroy = true
-  }
+  bucket = "iac-misc-terraform-state"
 }
 
 resource "aws_s3_bucket_versioning" "enabled" {
@@ -61,7 +48,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 }
 
 resource "aws_dynamodb_table" "terraform_locks" {
-  name         = var.s3_state_lock_table
+  name         = "iac-misc-terraform-locks"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "LockID"
 
