@@ -1,13 +1,40 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+
+data "aws_availability_zones" "azs" {
+    state = "available"
+}
+
 resource "aws_vpc" "example_vpc" {
   cidr_block = "10.0.0.0/16"
 }
 resource "aws_subnet" "subnet1" {
   vpc_id     = aws_vpc.example_vpc.id
   cidr_block = "10.0.1.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[0]
 }
 resource "aws_subnet" "subnet2" {
   vpc_id     = aws_vpc.example_vpc.id
   cidr_block = "10.0.2.0/24"
+  availability_zone = data.aws_availability_zones.azs.names[1]
 }
 resource "aws_neptune_subnet_group" "default" {
   name       = "main"
@@ -15,7 +42,7 @@ resource "aws_neptune_subnet_group" "default" {
 }
 
 resource "aws_neptune_cluster_parameter_group" "example" {
-  family      = "neptune1.2"
+  family      = "neptune1.3"
   name        = "example"
   description = "neptune cluster parameter group"
 
@@ -26,7 +53,7 @@ resource "aws_neptune_cluster_parameter_group" "example" {
 }
 
 resource "aws_neptune_parameter_group" "example" {
-  family = "neptune1.2"
+  family = "neptune1.3"
   name   = "example"
 
   parameter {

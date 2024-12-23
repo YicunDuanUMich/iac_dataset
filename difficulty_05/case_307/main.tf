@@ -1,10 +1,37 @@
-provider "aws" {
-  region = "us-west-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
+
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+data "aws_ami" "amzn2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["*ubuntu-noble-24.04-amd64-server-*"]
+  }
+}
+
 
 resource "aws_instance" "cloud_desktop" {
   instance_type = "t2.micro"
-  ami = "ami-obb84b8ffd8702438"
+  ami = data.aws_ami.amzn2.id
 }
 
 resource "aws_backup_plan" "cloud_desktop_backup" {

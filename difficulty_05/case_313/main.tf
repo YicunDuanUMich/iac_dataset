@@ -1,9 +1,24 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "cron" {
-  description         = "Event rule that runs everyday at 7 UTC"
   schedule_expression = "cron(0 7 * * ? *)"
 
   role_arn = aws_iam_role.cron.arn
@@ -14,19 +29,19 @@ resource "aws_cloudwatch_event_target" "cron" {
   arn  = aws_lambda_function.cron.arn
 }
 
-data "archive_file" "lambda_function" {
+data "archive_file" "lambda-func" {
   type        = "zip"
-  source_file = "cron.py"
-  output_path = "cron.zip"
+  source_file = "./supplement/lambda_func.py"
+  output_path = "./supplement/lambda_func.zip"
 }
 
 resource "aws_lambda_function" "cron" {
   function_name = "cron-lambda-function"
   role          = aws_iam_role.cron.arn
-
-  filename = "cron.zip"
-  handler  = "cron.lambda_handler"
-  runtime  = "python3.12"
+  filename      = data.archive_file.lambda-func.output_path
+  source_code_hash = data.archive_file.lambda-func.output_base64sha256
+  handler       = "lambda_func.handler"
+  runtime       = "python3.12"
 }
 
 resource "aws_lambda_permission" "cron" {
