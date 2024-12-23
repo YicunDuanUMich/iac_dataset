@@ -2,33 +2,33 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_db_instance" "db" {
-
-  identifier = "identifier"
-
   engine            = "postgres"
-  engine_version    = "14.3"
-  instance_class    = "db.t2.micro"
+  engine_version    = "17.2"
+  instance_class    = "db.t4g.micro"
   allocated_storage = 5
 
-  db_name  = "var.name"
-  username = "var.username"
-  password = "var.password"
+  db_name  = "mydbname"
+  username = "username"
+  password = "password"
 
-  db_subnet_group_name   = aws_db_subnet_group.default.name
-
-  availability_zone = "eu-west-2a"
+  db_subnet_group_name   = aws_db_subnet_group.main.name
 
   allow_major_version_upgrade = true
   auto_minor_version_upgrade  = true
@@ -40,14 +40,7 @@ resource "aws_db_instance" "db" {
   backup_window           = "03:00-06:00"
   maintenance_window      = "Mon:00:00-Mon:03:00"
   publicly_accessible = false
-  //  final_snapshot_identifier = "${var.identifier}-snapshot"
   enabled_cloudwatch_logs_exports = ["postgresql"]
-
-  tags = merge(
-    {
-      "Name" = "var.identifier"
-    },
-  )
 
   timeouts {
     create = "40m"
@@ -56,21 +49,42 @@ resource "aws_db_instance" "db" {
   }
 }
 
-resource "aws_db_subnet_group" "default" {
-  name       = "rds-subnet-group"
-  subnet_ids = [aws_subnet.main.id]
-
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
-resource "aws_subnet" "main" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
 
-  tags = {
-    Name = "Main"
-  }
+  name                 = "main-vpc"
+  cidr                 = "10.0.0.0/16"
+  azs                  = data.aws_availability_zones.available.names
+  private_subnets      = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets       = ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+resource "aws_security_group" "rds-proxy-sg" {
+  name        = "rds-proxy-sg"
+  vpc_id      = module.vpc.vpc_id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "db-proxy-sg-ingress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.rds-proxy-sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "db-proxy-sg-egress-rule" {
+  from_port       = 5432
+  to_port         = 5432
+  ip_protocol     = "tcp"
+  cidr_ipv4       = "0.0.0.0/0"
+  security_group_id = aws_security_group.rds-proxy-sg.id
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = "main"
+  subnet_ids = module.vpc.private_subnets
 }
