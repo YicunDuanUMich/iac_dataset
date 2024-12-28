@@ -1,1 +1,1 @@
-generate an Load Balancer that forward traffic to one or more target group
+generate an Load Balancer that forward traffic to one or more instances in a target group
