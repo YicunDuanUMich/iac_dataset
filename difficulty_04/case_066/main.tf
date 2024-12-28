@@ -1,23 +1,87 @@
-provider "aws" {
-  region = "us-west-2"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
-data "aws_iam_policy_document" "firehose_assume_role" {
-  statement {
-    effect = "Allow"
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
 
-    principals {
-      type        = "Service"
-      identifiers = ["firehose.amazonaws.com"]
-    }
-
-    actions = ["sts:AssumeRole"]
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
   }
 }
 
 resource "aws_iam_role" "firehose_role2" {
-  name               = "firehose_test_role2"
-  assume_role_policy = data.aws_iam_policy_document.firehose_assume_role.json
+  name = "firehose_http_s3_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "firehose.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "firehose_http_s3_policy" {
+  name        = "firehose_http_s3_policy"
+  description = "Policy for Kinesis Firehose to access S3 and HTTP endpoint"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetBucketLocation",
+          "s3:ListBucket",
+          "s3:GetObject"
+        ],
+        Resource = [
+          aws_s3_bucket.januaryeleventh.arn,
+          "${aws_s3_bucket.januaryeleventh.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "firehose:PutRecord",
+          "firehose:PutRecordBatch"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "firehose:DescribeDeliveryStream",
+          "firehose:ListDeliveryStreams",
+          "firehose:DescribeDestinations",
+          "firehose:DescribeHttpEndpointDestination",
+          "firehose:UpdateDestination"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "firehose_http_s3_policy_attach" {
+  role       = aws_iam_role.firehose_role2.name
+  policy_arn = aws_iam_policy.firehose_http_s3_policy.arn
 }
 
 resource "aws_s3_bucket" "januaryeleventh" {

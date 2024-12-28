@@ -1,5 +1,21 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1" 
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_route53_zone" "main" {
@@ -12,7 +28,6 @@ resource "aws_route53_health_check" "primary_health_check" {
   type              = "HTTP"
   resource_path     = "/"
   failure_threshold = 3
-  request_interval  = 30
 }
 
 resource "aws_route53_record" "primary_record" {
@@ -36,8 +51,6 @@ resource "aws_route53_health_check" "secondary_health_check" {
   type              = "HTTP"
   resource_path     = "/"
   failure_threshold = 3
-  request_interval  = 30
-
 }
 
 resource "aws_route53_record" "secondary_record" {

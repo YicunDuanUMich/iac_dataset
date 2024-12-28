@@ -1,25 +1,56 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_lex_intent" "BookTrip" {
-  create_version = false
   description    = "Book a trip"
   name           = "BookTrip"
+
+  sample_utterances = [
+    "I want to book a trip",
+    "I would like to book a trip",
+  ]
+
   fulfillment_activity {
     type = "ReturnIntent"
   }
 }
 
 resource "aws_lex_bot" "BookTripBot" {
+  description                   = "Bot for booking trips"
+  idle_session_ttl_in_seconds   = 600
+  locale                        = "en-US"
+  name                          = "BookTripBot"
+  process_behavior              = "BUILD"
+  voice_id                      = "Salli"
+  detect_sentiment = false
+  enable_model_improvements = true
+  nlu_intent_confidence_threshold = 0
+  child_directed                = false
+
   abort_statement {
     message {
       content      = "Sorry, I cannot assist you to book the trip right now."
       content_type = "PlainText"
     }
   }
-
-  child_directed                = false
+  
   clarification_prompt {
     max_attempts = 3
 
@@ -29,17 +60,6 @@ resource "aws_lex_bot" "BookTripBot" {
     }
   }
 
-  create_version                = false
-  description                   = "Bot for booking trips"
-  idle_session_ttl_in_seconds   = 600
-  locale                        = "en-US"
-  name                          = "BookTripBot"
-  process_behavior              = "SAVE"
-  voice_id                      = "Salli"
-  detect_sentiment = false
-  enable_model_improvements = true
-  nlu_intent_confidence_threshold = 0
-  
   intent {
     intent_name    = aws_lex_intent.BookTrip.name
     intent_version = aws_lex_intent.BookTrip.version

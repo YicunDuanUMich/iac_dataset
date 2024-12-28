@@ -2,37 +2,38 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+data "aws_iam_policy_document" "assume_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["codebuild.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
 }
 
 resource "aws_iam_role" "test_role" {
-  name = "test_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "codebuild.amazonaws.com"
-        }
-      },
-    ]
-  })
-
-  tags = {
-    tag-key = "test_role"
-  }
+  name               = "test_role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 
@@ -45,16 +46,14 @@ resource "aws_codebuild_project" "example" {
   }
 
   environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:4.0"
-    type                        = "LINUX_CONTAINER"
-    image_pull_credentials_type = "CODEBUILD"
-
+    compute_type = "BUILD_GENERAL1_SMALL"
+    image        = "aws/codebuild/standard:7.0-24.10.29"
+    type         = "LINUX_CONTAINER"
   }
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/neilbalch/SimplePythonTutorial.git"
+    location        = "github.com/source-location"
     git_clone_depth = 1
   }
 }

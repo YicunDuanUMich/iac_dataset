@@ -1,9 +1,22 @@
-provider "aws" {
-  region = "us-west-2"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
 
-
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
 
 data "aws_region" "current" {}
 
@@ -17,15 +30,21 @@ resource "aws_connect_instance" "example" {
 resource "aws_lex_intent" "example" {
   create_version = true
   name           = "connect_lex_intent"
-  fulfillment_activity {
-    type = "ReturnIntent"
-  }
+  
   sample_utterances = [
     "I would like to pick up flowers.",
   ]
+
+  fulfillment_activity {
+    type = "ReturnIntent"
+  }
 }
 
 resource "aws_lex_bot" "example13" {
+  name             = "connect_lex_bot"
+  process_behavior = "BUILD"
+  child_directed   = false
+
   abort_statement {
     message {
       content      = "Sorry, I am not able to assist at this time."
@@ -42,11 +61,7 @@ resource "aws_lex_bot" "example13" {
   intent {
     intent_name    = aws_lex_intent.example.name
     intent_version = "1"
-  }
-
-  child_directed   = true
-  name             = "connect_lex_bot"
-  process_behavior = "BUILD"
+  }  
 }
 
 resource "aws_connect_bot_association" "example" {
@@ -56,3 +71,4 @@ resource "aws_connect_bot_association" "example" {
     name       = aws_lex_bot.example13.name
   }
 }
+
