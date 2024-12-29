@@ -1,3 +1,23 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
 data "aws_availability_zones" "available" {
   state = "available"
 
@@ -8,13 +28,13 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_lightsail_disk" "test1" {
-  name              = "test-disk"
+  name              = "test-disk-1"
   size_in_gb        = 8
   availability_zone = data.aws_availability_zones.available.names[0]
 }
 
 resource "aws_lightsail_disk" "test2" {
-  name              = "test-disk"
+  name              = "test-disk-2"
   size_in_gb        = 8
   availability_zone = data.aws_availability_zones.available.names[0]
 }
@@ -35,5 +55,5 @@ resource "aws_lightsail_disk_attachment" "test1" {
 resource "aws_lightsail_disk_attachment" "test2" {
   disk_name     = aws_lightsail_disk.test2.name
   instance_name = aws_lightsail_instance.test.name
-  disk_path     = "/dev/xvdf"
+  disk_path     = "/dev/xvdg"
 }

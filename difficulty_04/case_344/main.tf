@@ -2,20 +2,27 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
+
+data "aws_region" "current" {}
 
 resource "random_string" "db_password" {
   keepers = {
-    region = "us-east-2"
+    region = data.aws_region.current.name
   }
 
   special = false

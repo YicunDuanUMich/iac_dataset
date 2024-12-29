@@ -2,20 +2,27 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.75"
     }
   }
 
-  required_version = ">= 1.2.0"
+  required_version = "~> 1.9.8"
 }
-# Define the provider block for AWS
+
 provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
+
+data "aws_region" "current" {}
 
 resource "random_string" "db_password" {
   keepers = {
-    region = "us-east-2"
+    region = data.aws_region.current.name
   }
 
   special = false
@@ -25,8 +32,8 @@ resource "random_string" "db_password" {
 resource "aws_db_instance" "main" {
   identifier_prefix      = "go-cloud-test"
   engine                 = "mysql"
-  engine_version         = "5.6.39"
-  instance_class         = "db.t2.micro"
+  engine_version         = "5.7"
+  instance_class         = "db.t3.micro"
   allocated_storage      = 20
   username               = "root"
   password               = random_string.db_password.result

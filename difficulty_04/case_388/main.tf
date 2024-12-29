@@ -1,12 +1,35 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
 
-# Define the provider block for AWS
-provider "aws" {
-  region = "us-east-2" # Set your desired AWS region
+  required_version = "~> 1.9.8"
 }
 
+provider "aws" {
+  region  = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["*ubuntu-noble-24.04-amd64-server-*"]
+  }
+}
 
 resource "aws_instance" "my_instance" {
-  ami           = "ami-06d4b7182ac3480fa" # Replace with your desired AMI ID
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"     # Replace with your desired instance type
 }
 
@@ -17,10 +40,6 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "test" {
   vpc_id     = aws_vpc.main.id
   cidr_block = "10.0.1.0/24"
-
-  tags = {
-    Name = "Main"
-  }
 }
 
 resource "aws_lb" "test" {

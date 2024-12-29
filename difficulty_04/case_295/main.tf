@@ -1,8 +1,26 @@
-provider "aws" {
-  region = "us-west-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_s3_bucket" "artifact_bucket" {}
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
+resource "aws_s3_bucket" "artifact_bucket" {
+  bucket_prefix = "artifact-bucket-"
+}
 
 resource "aws_codebuild_project" "autograder_build" {
   name         = "autograder_build"
@@ -16,7 +34,7 @@ resource "aws_codebuild_project" "autograder_build" {
 
   environment { # arguments required, exact value not specified
     compute_type = "BUILD_GENERAL1_SMALL"
-    image        = "alpine"
+    image        = "aws/codebuild/standard:7.0-24.10.29"
     type         = "LINUX_CONTAINER"
   }
 

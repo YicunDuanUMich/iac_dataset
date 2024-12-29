@@ -1,8 +1,25 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-  region = "us-west-1"
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_s3_bucket" "video_content" {
+  bucket_prefix = "video-content-"
 }
 
 locals {
@@ -16,7 +33,7 @@ resource "aws_cloudfront_origin_access_control" "netflix_cf" {
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_cloudfront_distribution" "netflix_distribution" {
+resource "aws_cloudfront_distribution" "my_distribution" {
   origin {
     domain_name              = aws_s3_bucket.video_content.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.netflix_cf.id
@@ -55,18 +72,18 @@ resource "aws_cloudfront_distribution" "netflix_distribution" {
 }
 
 # Route53
-resource "aws_route53_zone" "netflix_zone" {
-  name = "netflix.com"
+resource "aws_route53_zone" "my_zone" {
+  name = "my-test-cloudfront.com"
 }
 
 resource "aws_route53_record" "cdn_ipv4" {
   type    = "A"
   name    = "cdn"
-  zone_id = aws_route53_zone.netflix_zone.zone_id
+  zone_id = aws_route53_zone.my_zone.zone_id
 
   alias {
-    name                   = aws_cloudfront_distribution.netflix_distribution.domain_name
-    zone_id                = aws_cloudfront_distribution.netflix_distribution.hosted_zone_id
+    name                   = aws_cloudfront_distribution.my_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.my_distribution.hosted_zone_id
     evaluate_target_health = true
   }
 }
