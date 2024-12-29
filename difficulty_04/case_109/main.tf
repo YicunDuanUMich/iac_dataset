@@ -1,16 +1,37 @@
-provider "aws" {
-    region = "us-west-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_s3_bucket" "platform_infra" {
-  bucket = "wellcomecollection-platform-infra"
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
 
-  lifecycle {
-    prevent_destroy = true
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
   }
 }
 
+resource "aws_s3_bucket" "platform_infra" {
+  bucket_prefix = "wellcomecollection-platform-infra-"
+}
+
+resource "aws_s3_bucket_ownership_controls" "example" {
+    bucket = aws_s3_bucket.platform_infra.id
+    rule {
+        object_ownership = "BucketOwnerPreferred"
+    }
+}
+
 resource "aws_s3_bucket_acl" "platform_infra" {
+  depends_on = [ aws_s3_bucket_ownership_controls.example ]
+
   bucket = aws_s3_bucket.platform_infra.id
   acl    = "private"
 }

@@ -1,36 +1,36 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
-    region = "us-west-1"
-}
+  region = "us-east-1"
+  profile = "admin-1"
 
-variable "backstage_bucket" {
-  default = "backstage_bucket_for_my_corp"
-}
-
-variable "backstage_iam" {
-  default = "backstage"
-}
-
-variable "shared_managed_tag" {
-  default = "terraform_for_my_corp"
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_s3_bucket" "backstage" {
-  bucket = "test-bucket"
-  provider = aws
-
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  tags = {
-    Name                   = var.backstage_bucket
-    "Managed By Terraform" = var.shared_managed_tag
-  }
-
+  bucket_prefix = "test-bucket-"
 }
 
+resource "aws_s3_bucket_ownership_controls" "example" {
+    bucket = aws_s3_bucket.backstage.id
+    rule {
+        object_ownership = "BucketOwnerPreferred"
+    }
+}
 
 resource "aws_s3_bucket_acl" "backstage_acl" {
+  depends_on = [ aws_s3_bucket_ownership_controls.example ]
   bucket = aws_s3_bucket.backstage.id
   acl    = "private"
 }

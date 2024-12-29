@@ -1,23 +1,44 @@
-# Create the VPC in us-east-1
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
 resource "aws_vpc" "example_vpc" {
   cidr_block          = "10.0.0.0/16"
   enable_dns_support  = true
   enable_dns_hostnames = true
 }
 
-# Create subnet in us-east-1a
+data "aws_availability_zones" "azs" {
+    state = "available"
+}
+
 resource "aws_subnet" "subnet_a" {
   vpc_id                = aws_vpc.example_vpc.id
   cidr_block            = "10.0.1.0/24"
-  availability_zone     = "us-east-1a"
+  availability_zone     = data.aws_availability_zones.azs.names[0]
   map_public_ip_on_launch = true
 }
 
-# Create subnet in us-east-1b
 resource "aws_subnet" "subnet_b" {
   vpc_id                = aws_vpc.example_vpc.id
   cidr_block            = "10.0.2.0/24"
-  availability_zone     = "us-east-1b"
+  availability_zone     = data.aws_availability_zones.azs.names[1]
   map_public_ip_on_launch = true
 }
 

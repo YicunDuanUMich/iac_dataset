@@ -1,54 +1,77 @@
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
     }
-
-    actions = ["sts:AssumeRole"]
   }
+
+  required_version = "~> 1.9.8"
 }
 
-resource "aws_iam_role" "iam_for_lambda" {
-  name               = "iam_for_lambda"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
 
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = "lambda.js"
-  output_path = "lambda_function_payload.zip"
-}
-
-resource "aws_lambda_function" "test_lambda" {
-  filename      = "lambda_function_payload.zip"
-  function_name = "lambda_function_name"
-  role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "index.test"
-
-  runtime = "nodejs18.x"
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "lambda_schedule" {
   name        = "lambda-schedule-rule"
   description = "Invoke Lambda function every 15 minutes"
   schedule_expression = "rate(15 minutes)"
+  role_arn = aws_iam_role.cron.arn
 }
 
 # Create a CloudWatch Events Target to associate with the Lambda function
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule = aws_cloudwatch_event_rule.lambda_schedule.name
-  target_id = "invoke-lambda-function"
-  arn = aws_lambda_function.test_lambda.arn
+  arn = aws_lambda_function.cron.arn
 }
 
-# Grant permission to the CloudWatch Events rule to invoke the Lambda function
-resource "aws_lambda_permission" "allow_cloudwatch" {
-  statement_id  = "AllowExecutionFromCloudWatch"
+data "archive_file" "lambda-func" {
+  type        = "zip"
+  source_file = "./supplement/lambda_func.py"
+  output_path = "./supplement/lambda_func.zip"
+}
+
+resource "aws_lambda_function" "cron" {
+  function_name = "cron-lambda-function"
+  role          = aws_iam_role.cron.arn
+  filename      = data.archive_file.lambda-func.output_path
+  source_code_hash = data.archive_file.lambda-func.output_base64sha256
+  handler       = "lambda_func.handler"
+  runtime       = "python3.12"
+}
+
+resource "aws_lambda_permission" "cron" {
+  function_name = aws_lambda_function.cron.function_name
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.test_lambda.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.lambda_schedule.arn
+}
+
+data "aws_iam_policy_document" "cron_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type = "Service"
+      identifiers = [
+        "lambda.amazonaws.com",
+        "events.amazonaws.com"
+      ]
+    }
+  }
+}
+
+resource "aws_iam_role" "cron" {
+  name               = "cron_assume_role"
+  assume_role_policy = data.aws_iam_policy_document.cron_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "cron" {
+  role       = aws_iam_role.cron.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
