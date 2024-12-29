@@ -1,6 +1,21 @@
-# Define the provider (AWS in this case)
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
 provider "aws" {
   region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
 }
 
 data "aws_ami" "latest_amazon_linux_2" {
@@ -19,23 +34,26 @@ data "aws_ami" "latest_amazon_linux_2" {
   }
 }
 
-# Create a Virtual Private Cloud (VPC)
 resource "aws_vpc" "my_vpc" {
   cidr_block = "10.0.0.0/16"
+}
+
+data "aws_availability_zones" "azs" {
+    state = "available"
 }
 
 # Create Subnet in us-east-1a
 resource "aws_subnet" "subnet_a" {
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  availability_zone = data.aws_availability_zones.azs.names[0]
 }
 
 # Create Subnet in us-east-1b
 resource "aws_subnet" "subnet_b" {
   vpc_id            = aws_vpc.my_vpc.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1b"
+  availability_zone = data.aws_availability_zones.azs.names[1]
 }
 
 # Create an EC2 instance in Subnet A

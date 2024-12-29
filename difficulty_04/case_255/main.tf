@@ -1,3 +1,23 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.75"
+    }
+  }
+
+  required_version = "~> 1.9.8"
+}
+
+provider "aws" {
+  region = "us-east-1"
+  profile = "admin-1"
+
+  assume_role {
+    role_arn = "arn:aws:iam::590184057477:role/yicun-iac"
+  }
+}
+
 resource "aws_redshift_cluster" "example" {
   cluster_identifier = "tf-redshift-cluster"
   database_name      = "mydb"
@@ -17,31 +37,23 @@ resource "aws_vpc" "foo" {
   cidr_block = "10.1.0.0/16"
 }
 
+data "aws_availability_zones" "azs" {
+    state = "available"
+}
+
 resource "aws_subnet" "foo" {
   cidr_block        = "10.1.1.0/24"
-  availability_zone = "us-east-1a"
+  availability_zone = data.aws_availability_zones.azs.names[0]
   vpc_id            = aws_vpc.foo.id
-
-  tags = {
-    Name = "tf-dbsubnet-test-1"
-  }
 }
 
 resource "aws_subnet" "bar" {
   cidr_block        = "10.1.2.0/24"
-  availability_zone = "us-east-1b"
+  availability_zone = data.aws_availability_zones.azs.names[1]
   vpc_id            = aws_vpc.foo.id
-
-  tags = {
-    Name = "tf-dbsubnet-test-2"
-  }
 }
 
 resource "aws_redshift_subnet_group" "foobar" {
   name       = "foo"
   subnet_ids = [aws_subnet.foo.id, aws_subnet.bar.id]
-
-  tags = {
-    environment = "Production"
-  }
 }
